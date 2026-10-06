@@ -1,4 +1,5 @@
 import { drawAirframe as drawShip } from './airframes.js';
+import { bossShieldText } from './i18n.js';
 export { drawShip };
 
 // Original procedural artwork. All coordinates use the game's 480 × 800 stage.
@@ -264,7 +265,7 @@ function boss(c,e,t) {
     }
     c.fillStyle='#0d1931e6'; c.fillRect(-65,92,130,22);
     c.fillStyle='#dce8ff'; c.font='600 13px system-ui, sans-serif'; c.textAlign='center'; c.textBaseline='middle';
-    c.fillText(entering?'入场护盾 · 暂时免伤':'相位护盾 · 暂时免伤',0,103);
+    c.fillText(bossShieldText(entering),0,103);
     c.fillStyle='#93c3ff'; c.fillRect(-60,117,120*progress,2);
   }
   c.restore();

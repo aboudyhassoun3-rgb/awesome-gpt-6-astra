@@ -1504,3 +1504,49 @@ a {
 .board-stage .stage-caption {
   display: none;
 }
+
+/* ===== i18n: RTL + language switcher (Arabic default) ===== */
+html[dir='rtl'] body {
+  font-family: 'Segoe UI', Tahoma, 'Noto Naskh Arabic', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+html[dir='rtl'] .brand-name,
+html[dir='rtl'] .intro h1,
+html[dir='rtl'] .panel h2,
+html[dir='rtl'] .card-main h4,
+html[dir='rtl'] .modal-content h2 {
+  letter-spacing: 0 !important;
+}
+html[dir='rtl'] .stage-watermark {
+  writing-mode: horizontal-tb;
+  right: auto;
+  left: 25px;
+}
+html[dir='rtl'] .stat + .stat {
+  border-left: 0;
+  border-right: 1px solid #e7ece1;
+  padding-left: 0;
+  padding-right: 17px;
+}
+.lang-switch {
+  display: flex;
+  gap: 4px;
+  border: 1px solid #dce2d7;
+  border-radius: 20px;
+  padding: 3px;
+  background: #fff;
+  flex-shrink: 0;
+}
+.lang-switch button {
+  border: 0;
+  background: transparent;
+  color: #7b847a;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  min-height: 32px;
+}
+.lang-switch button.active {
+  background: #294b38;
+  color: #edf1e5;
+  font-weight: 700;
+}

@@ -5,6 +5,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import type { LockPiece, BoardPiece, Vec3 } from '@/lib/game';
 import { NAMES } from '@/lib/game';
+import { useLang } from '@/lib/i18n';
 
 type Props = {
   pieces: LockPiece[];
@@ -156,6 +157,7 @@ function textTexture(
   return tex;
 }
 export default function PuzzleScene(props: Props) {
+  const { t } = useLang();
   const host = useRef<HTMLDivElement>(null);
   const latest = useRef(props);
   useEffect(() => {
@@ -523,25 +525,21 @@ export default function PuzzleScene(props: Props) {
         className="scene-host"
         ref={host}
         aria-label={
-          props.mode === 'lock'
-            ? '可旋转的六木孔明锁，使用右侧编号和方向按钮也可操作'
-            : '三维华容道棋盘，点击棋子后按方向键移动'
+          props.mode === 'lock' ? t('scene.aria.lock') : t('scene.aria.board')
         }
       />
       {!ready && !error && (
         <div className="scene-loading">
-          <span>正在摆好木作…</span>
+          <span>{t('scene.loading')}</span>
         </div>
       )}
       {error && (
         <div className="error-fallback">
-          <strong>暂时无法显示 3D 木作</strong>
-          <span>
-            请开启浏览器硬件加速后刷新页面。
-            <br />
-            右侧编号与方向按钮仍可操作。
-          </span>
-          <button onClick={() => location.reload()}>重新加载</button>
+          <strong>{t('scene.err.t')}</strong>
+          <span>{t('scene.err.d')}</span>
+          <button onClick={() => location.reload()}>
+            {t('scene.err.reload')}
+          </button>
         </div>
       )}
     </>

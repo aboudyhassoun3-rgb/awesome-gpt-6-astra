@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#09131e">
-  <meta name="description" content="雷霆战机·天穹远征：三种战机、五大空域、漂移弹幕、多阶段Boss与四色武器。支持手机触控的十分钟原创街机战役。">
-  <title>雷霆战机 · 天穹远征 — THUNDERFALL</title>
+  <meta name="description" id="meta-description" content="صواعق الرعد · حملة القبة السماوية: ثلاث طائرات وخمسة قطاعات ووابل رصاص منحنٍ وزعماء متعددو المراحل وأربعة أسلحة ملوّنة. حملة أركيد أصلية لعشر دقائق تدعم لمس الجوال.">
+  <title>صواعق الرعد · حملة القبة السماوية — THUNDERFALL</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="stylesheet" href="./style.css">
 </head>
@@ -21,40 +21,40 @@
   </defs></svg>
   <div class="app-shell">
     <header class="masthead">
-      <a class="brand" href="./" aria-label="雷霆战机首页"><svg><use href="#i-wing"/></svg><span>THUNDERFALL<small>天穹远征 / FLIGHT COMMAND</small></span></a>
+      <a class="brand" href="./" data-i18n-aria="brand.home" aria-label="الصفحة الرئيسية لصواعق الرعد"><svg><use href="#i-wing"/></svg><span>THUNDERFALL<small data-i18n="brand.sub">حملة القبة السماوية / قيادة الطيران</small></span></a>
       <div class="header-meta"><span class="status-dot"></span> NO INSTALL <span class="divider">/</span> VOL. 002</div>
-      <div class="header-actions"><button id="sound-button" class="icon-button" aria-label="开启声音" aria-pressed="false"><svg><use href="#i-sound"/></svg><span id="sound-label">静音</span></button><button id="help-button" class="icon-button" aria-label="操作与玩法说明">?</button></div>
+      <div class="header-actions"><div class="lang-switch" role="group" aria-label="Language / 语言 / اللغة"><button data-lang="ar" aria-pressed="true">العربية</button><button data-lang="zh" aria-pressed="false">中文</button><button data-lang="en" aria-pressed="false">EN</button></div><button id="sound-button" class="icon-button" data-i18n-aria="sound.off.aria" aria-label="تشغيل الصوت" aria-pressed="false"><svg><use href="#i-sound"/></svg><span id="sound-label">صامت</span></button><button id="help-button" class="icon-button" data-i18n-aria="help.aria" aria-label="تعليمات التشغيل وأسلوب اللعب">?</button></div>
     </header>
     <main class="command-layout">
       <aside class="left-panel">
-        <p class="eyebrow"><span class="orange-dot"></span> THE LAST SQUADRON</p>
+        <p class="eyebrow"><span class="orange-dot"></span> <span data-i18n="left.eyebrow">السرب الأخير</span></p>
         <h1>THUNDER<span>FALL<span class="title-dot">.</span></span></h1>
-        <p class="chinese-title">雷霆战机 · 天穹远征</p>
-        <p class="intro">穿过弹幕，击碎天穹。<br>最后一道防线，由你守住。</p>
-        <section class="route-section" aria-label="五关战役航线">
-          <div class="section-heading"><span>作战航线</span><small>5 SECTORS / 10 MIN+</small></div>
+        <p class="chinese-title" data-i18n="left.title.cn">صواعق الرعد · حملة القبة السماوية</p>
+        <p class="intro" data-i18n="left.intro">اعبر وابل الرصاص وحطّم القبة السماوية.<br>خط الدفاع الأخير تحميه أنت.</p>
+        <section class="route-section" aria-label="مسار حملة القطاعات الخمسة">
+          <div class="section-heading"><span data-i18n="route.title">مسار الحملة</span><small data-i18n="route.sub">5 قطاعات / +10 دقائق</small></div>
           <ol id="mission-route"></ol>
         </section>
-        <div class="best-record"><span>本机战役最高分</span><strong id="best-score">000,000</strong><small>仅保存在此浏览器 · 演练不计入</small></div>
+        <div class="best-record"><span data-i18n="best.label">أعلى نتيجة للحملة على هذا الجهاز</span><strong id="best-score">000,000</strong><small data-i18n="best.note">تُحفظ في هذا المتصفح فقط · التدريب لا يُحتسب</small></div>
       </aside>
-      <section class="arcade" aria-label="战机游戏">
-        <div class="cabinet-top"><span><i></i> LIVE FLIGHT</span><span id="flight-state">HANGAR 01</span><span>480 : 800</span></div>
+      <section class="arcade" aria-label="لعبة الطائرات">
+        <div class="cabinet-top"><span><i></i> <span data-i18n="cabinet.live">طيران مباشر</span></span><span id="flight-state">الحظيرة 01</span><span>480 : 800</span></div>
         <div class="stage" id="stage">
-          <canvas id="game-canvas" width="480" height="800" tabindex="0" aria-label="战场。在任意位置按住拖动战机，或用方向键及 WASD 移动；自动开火。空格使用炸弹，E 开启爆发，P 暂停。"></canvas>
+          <canvas id="game-canvas" width="480" height="800" tabindex="0" data-i18n-aria="canvas.aria" aria-label="ساحة المعركة. اسحب الطائرة من أي موضع للتحرك، أو استخدم الأسهم و WASD؛ إطلاق النار تلقائي. المسافة للقنبلة، و E للانفجار، و P للإيقاف."></canvas>
           <div id="hud" class="hud" hidden>
-            <div class="hud-top"><div><small>SCORE <span id="multiplier">×1</span></small><strong id="score">000000</strong></div><div class="hud-time"><small id="hud-stage">01 / 05</small><strong id="elapsed">00:00</strong></div><button id="pause-button" class="icon-button" aria-label="暂停战斗"><svg><use href="#i-pause"/></svg></button></div>
-            <div class="vitals"><span id="hull" aria-label="机体耐久"></span><span id="shield" aria-label="护盾"></span></div>
+            <div class="hud-top"><div><small><span data-i18n="hud.score">النتيجة</span> <span id="multiplier">×1</span></small><strong id="score">000000</strong></div><div class="hud-time"><small id="hud-stage">01 / 05</small><strong id="elapsed">00:00</strong></div><button id="pause-button" class="icon-button" data-i18n-aria="pause.aria" aria-label="إيقاف المعركة مؤقتًا"><svg><use href="#i-pause"/></svg></button></div>
+            <div class="vitals"><span id="hull" data-i18n-aria="hull.aria" aria-label="متانة الجسم"></span><span id="shield" data-i18n-aria="shield.aria" aria-label="الدرع"></span></div>
             <div id="boss-hud" class="boss-hud" hidden><div><span id="boss-name"></span><span id="boss-phase"></span></div><div class="boss-track"><i id="boss-fill"></i></div></div>
           </div>
           <div id="hangar" class="hangar">
-            <div class="hangar-heading"><p class="eyebrow">MISSION 001 — THE SKY IS CALLING</p><h2>选择你的战机</h2><p>三种机体。一条通往天穹的航线。</p></div>
-            <div class="ship-details"><span id="ship-code">F-01 / INTERCEPTOR</span><span>READY TO DEPLOY <i></i></span></div>
+            <div class="hangar-heading"><p class="eyebrow" data-i18n="hangar.kicker">المهمة 001 — السماء تناديك</p><h2 data-i18n="hangar.title">اختر طائرتك</h2><p data-i18n="hangar.sub">ثلاثة طرازات. ومسار واحد نحو القبة السماوية.</p></div>
+            <div class="ship-details"><span id="ship-code">F-01 / INTERCEPTOR</span><span><span data-i18n="hangar.ready">جاهز للانطلاق</span> <i></i></span></div>
             <div class="hangar-controls">
-              <div class="ship-picker" id="ship-picker" aria-label="选择战机"></div>
+              <div class="ship-picker" id="ship-picker" aria-label="اختيار الطائرة"></div>
               <div class="ship-summary"><p id="ship-description"></p><div id="ship-stats"></div></div>
-              <div class="run-options"><label>难度<select id="difficulty"><option value="normal">标准 · 致命一击自动炸弹</option><option value="arcade">街机 · 更密弹幕，手动炸弹</option></select></label><label>航程<select id="run-mode"><option value="campaign">完整战役 · 5 关 / 10 分钟起</option><option value="0">演练 · 01 晨曦海港</option><option value="1">演练 · 02 翡翠峡谷</option><option value="2">演练 · 03 冰川阵列</option><option value="3">演练 · 04 熔核工厂</option><option value="4">演练 · 05 天穹核心</option></select></label></div>
-              <button id="start-button" class="primary-button"><span>开始远征 <small>AUTO FIRE ON</small></span><svg><use href="#i-arrow"/></svg></button>
-              <p class="start-hint">拖动移动 / WASD · 自动开火 · 手机可玩</p>
+              <div class="run-options"><label><span data-i18n="difficulty.label">الصعوبة</span><select id="difficulty"><option value="normal" data-i18n="difficulty.normal">قياسي · قنبلة تلقائية عند الضربة القاتلة</option><option value="arcade" data-i18n="difficulty.arcade">أركيد · وابل أكثف وقنابل يدوية</option></select></label><label><span data-i18n="run.label">مسار الرحلة</span><select id="run-mode"><option value="campaign" data-i18n="run.campaign">حملة كاملة · 5 قطاعات / من 10 دقائق</option><option value="0" data-i18n="run.s0">تدريب · 01 ميناء الفجر</option><option value="1" data-i18n="run.s1">تدريب · 02 وادي الزمرد</option><option value="2" data-i18n="run.s2">تدريب · 03 مصفوفة الجليد</option><option value="3" data-i18n="run.s3">تدريب · 04 مصنع النواة</option><option value="4" data-i18n="run.s4">تدريب · 05 نواة القبة</option></select></label></div>
+              <button id="start-button" class="primary-button"><span><span data-i18n="start">ابدأ الحملة</span> <small data-i18n="start.auto">إطلاق تلقائي مفعّل</small></span><svg><use href="#i-arrow"/></svg></button>
+              <p class="start-hint" data-i18n="start.hint">السحب للحركة / WASD · إطلاق تلقائي · قابل للعب على الجوال</p>
             </div>
           </div>
           <div id="stage-announcement" class="stage-announcement" hidden><small id="announcement-kicker"></small><strong id="announcement-title"></strong><span id="announcement-detail"></span></div>
@@ -65,23 +65,23 @@
           <div class="stage-progress" aria-hidden="true"><i id="stage-progress-fill"></i></div>
         </div>
         <div class="combat-controls">
-          <button id="bomb-button" disabled><svg><use href="#i-bomb"/></svg><span>震荡炸弹<small>SPACE · <b id="bomb-count">2</b> 枚</small></span></button>
-          <button id="overdrive-button" disabled class="overdrive-button"><i id="charge-fill"></i><svg><use href="#i-bolt"/></svg><span>雷霆爆发<small id="charge-label">E · 20%</small></span></button>
-          <button id="focus-button" disabled aria-pressed="false"><svg><use href="#i-target"/></svg><span>精密移动<small>SHIFT · 低速</small></span></button>
+          <button id="bomb-button" disabled><svg><use href="#i-bomb"/></svg><span><span data-i18n="bomb">قنبلة صدمية</span><small>SPACE · <b id="bomb-count">2</b> <span data-i18n="bomb.unit">قنبلة</span></small></span></button>
+          <button id="overdrive-button" disabled class="overdrive-button"><i id="charge-fill"></i><svg><use href="#i-bolt"/></svg><span><span data-i18n="overdrive">انفجار الرعد</span><small id="charge-label">E · 20%</small></span></button>
+          <button id="focus-button" disabled aria-pressed="false"><svg><use href="#i-target"/></svg><span><span data-i18n="focus">حركة دقيقة</span><small data-i18n="focus.sub">SHIFT · سرعة منخفضة</small></span></button>
         </div>
-        <div class="cabinet-bottom"><span id="weapon-mini">P / 风暴脉冲 LV.1</span><span id="bottom-tip">AUTO FIRE / DRAG TO FLY</span></div>
+        <div class="cabinet-bottom"><span id="weapon-mini">P / نبضة العاصفة LV.1</span><span id="bottom-tip">إطلاق تلقائي / اسحب للطيران</span></div>
       </section>
       <aside class="right-panel">
-        <section class="loadout-section"><div class="section-heading"><span>当前装载</span><small>LOADOUT</small></div><div class="weapon-emblem" id="weapon-emblem">P</div><p class="eyebrow" id="weapon-tier">BLUE / 蓝色</p><h2 id="weapon-name">风暴脉冲</h2><p id="weapon-description">扇形散射覆盖宽阔空域，适合清理分散敌机。</p><div class="weapon-level" id="weapon-level"></div></section>
-        <section class="supply-section"><div class="section-heading"><span>战场补给</span><small>10s TO CLAIM</small></div><div class="loot-key"><span style="--loot:#69b9ff">P<small>散射</small></span><span style="--loot:#7af0b8">L<small>穿透</small></span><span style="--loot:#c795ff">A<small>追踪</small></span><span style="--loot:#ffd36b">N<small>爆裂</small></span></div><p>击落敌机，追逐漂浮补给。<br>同款升级，异款切换，等级保留。</p></section>
-        <section class="tactics-section"><div class="section-heading"><span>飞行手册</span><small>FIELD NOTES</small></div><dl><div><dt>01</dt><dd><strong>看清预警线</strong><span>虚线预警后，激光才有伤害。</span></dd></div><div><dt>02</dt><dd><strong>擦弹获得充能</strong><span>贴近弹幕，蓄满 8 秒火力爆发。</span></dd></div><div><dt>03</dt><dd><strong>留一枚炸弹</strong><span>清除弹幕，换取短暂无敌。</span></dd></div></dl></section>
-        <div class="project-note"><span>ORIGINAL ARCADE EXPERIMENT</span><p>原创程序画面与合成声音<br>Created with GPT-6 Astra</p><button id="reduced-button" class="text-button" aria-pressed="false">减少装饰动态：关闭</button></div>
+        <section class="loadout-section"><div class="section-heading"><span data-i18n="loadout.title">العتاد الحالي</span><small data-i18n="loadout.sub">العتاد</small></div><div class="weapon-emblem" id="weapon-emblem">P</div><p class="eyebrow" id="weapon-tier">BLUE / أزرق</p><h2 id="weapon-name">نبضة العاصفة</h2><p id="weapon-description">تشتت مروحي يغطي مساحة واسعة، مثالي لتنظيف الأعداء المتباعدين.</p><div class="weapon-level" id="weapon-level"></div></section>
+        <section class="supply-section"><div class="section-heading"><span data-i18n="supply.title">إمدادات الميدان</span><small data-i18n="supply.sub">10 ثوانٍ للالتقاط</small></div><div class="loot-key"><span style="--loot:#69b9ff">P<small data-i18n-loot="pulse">تشتت</small></span><span style="--loot:#7af0b8">L<small data-i18n-loot="laser">اختراق</small></span><span style="--loot:#c795ff">A<small data-i18n-loot="arc">تعقّب</small></span><span style="--loot:#ffd36b">N<small data-i18n-loot="nova">انفجار</small></span></div><p data-i18n="supply.note">أسقط الأعداء وطارد الإمدادات العائمة.<br>نفس النوع يرقّي، والنوع المختلف يبدّل مع حفظ المستوى.</p></section>
+        <section class="tactics-section"><div class="section-heading"><span data-i18n="manual.title">دليل الطيران</span><small data-i18n="manual.sub">ملاحظات ميدانية</small></div><dl><div><dt>01</dt><dd><strong data-i18n="manual.1t">انتبه لخطوط التحذير</strong><span data-i18n="manual.1d">الليزر لا يضر إلا بعد خط التحذير المتقطع.</span></dd></div><div><dt>02</dt><dd><strong data-i18n="manual.2t">الاحتكاك يشحن طاقتك</strong><span data-i18n="manual.2d">اقترب من الرصاص لتشحن انفجارًا ناريًا لـ 8 ثوانٍ.</span></dd></div><div><dt>03</dt><dd><strong data-i18n="manual.3t">احتفظ بقنبلة</strong><span data-i18n="manual.3d">تمسح وابل الرصاص وتمنحك حصانة قصيرة.</span></dd></div></dl></section>
+        <div class="project-note"><span data-i18n="project.note">تجربة أركيد أصلية</span><p data-i18n="project.sub">رسوم وأصوات مولّدة برمجيًا<br>صُنعت مع GPT-6 Astra</p><button id="reduced-button" class="text-button" aria-pressed="false">تقليل الحركة الزخرفية: متوقف</button></div>
       </aside>
     </main>
-    <footer class="page-footer"><span>A SMALL HITBOX. A VERY BIG SKY.</span><span>FREE TO PLAY / NO LOGIN / NO ADS</span></footer>
+    <footer class="page-footer"><span data-i18n="footer.1">نقطة إصابة صغيرة. وسماء شاسعة جدًا.</span><span data-i18n="footer.2">لعب مجاني / بلا تسجيل / بلا إعلانات</span></footer>
   </div>
-  <dialog id="help-dialog"><button class="dialog-close icon-button" aria-label="关闭玩法说明">×</button><p class="eyebrow">FLIGHT MANUAL</p><h2>十分钟，穿越五大空域。</h2><p>每关至少 120 秒，击破该关 Boss 才能前进；关间选择强化不计入战斗时间。火力不足时 Boss 战会延长。演练只挑战一关，不计入战役纪录。</p><dl class="manual-grid"><div><dt>手机 / 鼠标</dt><dd>在战场任意位置按住拖动。战机自动开火，移动采用相对位移，不会瞬移到手指处。底部三个按钮可随时使用。</dd></div><div><dt>键盘</dt><dd>WASD / 方向键移动；Shift 低速；空格炸弹；E 爆发；P / Esc 暂停。</dd></div><div><dt>护盾与生存</dt><dd>中央的小光点是受击核心。受伤后约 2 秒无敌；持续避弹 13 秒开始恢复护盾。关间修复 2 点机体、补满护盾并补 1 枚炸弹。</dd></div><div><dt>武器补给</dt><dd>蓝色散射、绿色穿透、紫色追踪、金色爆裂。补给在场内反弹 10 秒；同款拾取升级到最高 Lv.5，异款切换时保留等级。</dd></div><div><dt>打出高分</dt><dd>持续击杀叠加最高 ×5 连击分；擦弹增加分数与爆发充能。雷霆爆发持续 8 秒，启动时清弹，期间仍要躲避新弹幕。</dd></div><div><dt>暂停与续战</dt><dd>切到后台会自动暂停。最多可续战 3 次，重开当前关并扣除 35% 分数，已有升级保留。战役最高分仅存本机。</dd></div></dl><button class="primary-button dialog-close">明白，准备出击<svg><use href="#i-arrow"/></svg></button></dialog>
-  <noscript>此游戏需要 JavaScript。请开启后重新加载。</noscript>
+  <dialog id="help-dialog"><button class="dialog-close icon-button" data-i18n-aria="help.close" aria-label="إغلاق تعليمات اللعب">×</button><p class="eyebrow" data-i18n="help.kicker">دليل الطيران</p><h2 data-i18n="help.title">عشر دقائق تعبر خمسة قطاعات.</h2><p data-i18n="help.intro">كل قطاع 120 ثانية على الأقل، ويجب إسقاط زعيمه للتقدم؛ واختيار التعزيز بين القطاعات لا يُحتسب ضمن زمن القتال. ضعف النيران يطيل معارك الزعماء. التدريب قطاع واحد ولا يُحتسب في سجل الحملة.</p><dl class="manual-grid"><div><dt data-i18n="help.m1t">الجوال / الفأرة</dt><dd data-i18n="help.m1d">اضغط واسحب في أي موضع من ساحة المعركة. الطائرة تطلق تلقائيًا والحركة نسبية فلا تقفز نحو إصبعك. الأزرار الثلاثة السفلية متاحة دائمًا.</dd></div><div><dt data-i18n="help.m2t">لوحة المفاتيح</dt><dd data-i18n="help.m2d">التحرك بـ WASD / الأسهم؛ و Shift للبطء؛ والمسافة للقنبلة؛ و E للانفجار؛ و P / Esc للإيقاف.</dd></div><div><dt data-i18n="help.m3t">الدرع والبقاء</dt><dd data-i18n="help.m3d">النقطة المضيئة الوسطى هي نواة الإصابة. حصانة ~ثانيتين بعد الإصابة؛ وتجنّب الرصاص 13 ثانية يبدأ استعادة الدرع. بين القطاعات: إصلاح نقطتي جسم وملء الدرع وقنبلة +1.</dd></div><div><dt data-i18n="help.m4t">إمدادات الأسلحة</dt><dd data-i18n="help.m4d">أزرق مشتت، أخضر خارق، بنفسجي موجّه، ذهبي انفجاري. الإمداد يرتد 10 ثوانٍ؛ ونفس النوع يرقّي حتى Lv.5، والنوع المختلف يبدّل مع حفظ المستوى.</dd></div><div><dt data-i18n="help.m5t">احصد نقاطًا عالية</dt><dd data-i18n="help.m5d">القتل المتواصل يرفع التضاعف حتى ×5؛ والاحتكاك يزيد النقاط وشحن الانفجار. انفجار الرعد 8 ثوانٍ يمسح الرصاص عند التفعيل لكن الرصاص الجديد خطير.</dd></div><div><dt data-i18n="help.m6t">الإيقاف والمتابعة</dt><dd data-i18n="help.m6d">الانتقال للخلفية يوقف اللعب تلقائيًا. حتى 3 متابعات تُعيد القطاع الحالي مع خصم 35% من النقاط والاحتفاظ بالترقيات. أعلى نتيجة للحملة تُحفظ على جهازك.</dd></div></dl><button class="primary-button dialog-close"><span data-i18n="help.ok">فهمت، جاهز للانطلاق</span><svg><use href="#i-arrow"/></svg></button></dialog>
+  <noscript>هذه اللعبة تحتاج JavaScript. فعّلها ثم أعد التحميل.</noscript>
   <script type="module" src="./app.js"></script>
 </body>
 </html>

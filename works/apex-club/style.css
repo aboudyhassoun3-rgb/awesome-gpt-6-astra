@@ -97,3 +97,31 @@
 
 /* Input capability is independent of viewport width. */
 html:not(.handheld-input) .mobile-settings,html:not(.handheld-input) #touchControls,html:not(.handheld-input) #rotateHint,html:not(.handheld-input) #mobileCenter{display:none!important}
+
+/* ===== Arabic / RTL support (no external fonts) ===== */
+html[lang="ar"] body{font-family:Inter,"Segoe UI",Tahoma,"Noto Kufi Arabic","Geeza Pro",Arial,sans-serif;}
+html[lang="ar"] .eyebrow,html[lang="ar"] .label,html[lang="ar"] .speed-label,html[lang="ar"] .session,html[lang="ar"] .steering-caption,html[lang="ar"] .auto-drive{letter-spacing:.02em;}
+html[lang="ar"] .lobby-copy h1,html[lang="ar"] .brand,html[lang="ar"] #centerMsg{letter-spacing:0;}
+html[lang="ar"] kbd{letter-spacing:0;}
+#langToggle{font-weight:800;min-width:52px;}
+/* Mirror lobby + HUD panels in RTL; 3D canvas and map stay physical. */
+html[dir="rtl"] .lobby-copy{left:auto;right:6%;text-align:right;}
+html[dir="rtl"] .race-setup{right:auto;left:5%;}
+html[dir="rtl"] #lobby .lobby-copy{left:auto;right:6%;}
+html[dir="rtl"] #lobby .race-setup{right:auto;left:5%;}
+html[dir="rtl"] .top{left:auto;right:24px;}
+html[dir="rtl"] .telemetry{left:auto;right:24px;}
+html[dir="rtl"] .navigation{right:auto;left:24px;}
+html[dir="rtl"] .position{right:auto;left:25px;}
+html[dir="rtl"] #controlsToggle{right:auto;left:25px;}
+html[dir="rtl"] #teamScore{flex-direction:row-reverse;}
+html[dir="rtl"] .progress-track,.drift-track,.bar .fill,#courseProgress,#driftFill{direction:ltr;}
+html[dir="rtl"] .boost-status i,html[dir="rtl"] .boost-status b{direction:ltr;display:block;}
+html[dir="rtl"] .kart-stat strong{text-align:left;}
+html[dir="rtl"] .control-grid kbd{direction:ltr;display:inline-block;}
+html[dir="rtl"] #help kbd{direction:ltr;display:inline-block;}
+html[dir="rtl"] .touch-left{left:auto;right:max(24px,env(safe-area-inset-right));transform-origin:bottom right;}
+html[dir="rtl"] .touch-right{right:auto;left:max(24px,env(safe-area-inset-left));transform-origin:bottom left;}
+html[dir="rtl"] .leader-row,html[dir="rtl"] .results-card table{text-align:right;}
+html[dir="rtl"] .results-card td,html[dir="rtl"] .results-card th{text-align:right;}
+@media(max-width:760px){html[dir="rtl"] .top{left:auto;right:15px;}html[dir="rtl"] .telemetry{left:auto;right:15px;}html[dir="rtl"] .navigation{right:auto;left:15px;}html[dir="rtl"] .position{right:auto;left:15px;}html[dir="rtl"] #controlsToggle{right:auto;left:15px;}html[dir="rtl"] #teamScore{left:auto;right:20px;}}

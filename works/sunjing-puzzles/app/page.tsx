@@ -41,6 +41,7 @@ import {
   nextRemoval,
   solvedBoard,
 } from '@/lib/game';
+import { useLang, LangSwitcher, gameText, pieceName } from '@/lib/i18n';
 import type { GameId, Snapshot, LockPiece } from '@/lib/game';
 import boardData from '@/lib/boards.json';
 import lockData from '@/lib/lock.json';
@@ -101,6 +102,7 @@ function validSave(s: unknown): s is Snapshot {
   return true;
 }
 export default function Home() {
+  const { lang, setLang, t } = useLang();
   const [gameId, setGameId] = useState<GameId>('lock');
   const [snap, setSnap] = useState<Snapshot>(() => initial('lock'));
   const [history, setHistory] = useState<Snapshot[]>([]);
@@ -215,13 +217,13 @@ export default function Home() {
   function remove(sign: number) {
     if (!isLock || complete) return;
     if (typeof selected !== 'number') {
-      tell('先点击一根木块，或选择右侧的编号。');
+      tell(t('msg.pick.lock'));
       return;
     }
     const result = canRemove(PIECES, snap.removed, selected, sign);
     if (!result.ok) {
       tell(
-        `暂时卡住了。${String((result.blocker ?? 0) + 1).padStart(2, '0')} 号木挡住了这条路径，换个顺序试试。`,
+        `${t('msg.blocked')} ${String((result.blocker ?? 0) + 1).padStart(2, '0')} ${t('msg.blocked.tail')}`,
       );
       return;
     }
@@ -233,13 +235,13 @@ export default function Home() {
     });
     setSelected(null);
     tell(
-      `${String(selected + 1).padStart(2, '0')} 号木已取出。再观察一下新的空隙。`,
+      `${t('msg.out')} ${String(selected + 1).padStart(2, '0')} ${t('msg.out.tail')}`,
     );
   }
   function slide(id: string, dx: number, dy: number) {
     if (isLock || complete) return;
     if (!canSlide(snap.board, id, dx, dy)) {
-      tell('这个方向没有足够的空位，再看看旁边。');
+      tell(t('msg.nospace'));
       return;
     }
     record({
@@ -254,7 +256,7 @@ export default function Home() {
   }
   function moveSelected(dx: number, dy: number) {
     if (typeof selected === 'string') slide(selected, dx, dy);
-    else tell('先选择一枚棋子，再按方向移动。');
+    else tell(t('msg.pick.board'));
   }
   function undo() {
     if (!history.length) return;
@@ -301,7 +303,7 @@ export default function Home() {
         setSelected(next.id);
         const p = PIECES.find((p) => p.id === next.id)!;
         tell(
-          `试试 ${String(next.id + 1).padStart(2, '0')} 号木，沿 ${directionName(p.axis, next.sign)} 方向抽出。`,
+          `${t('msg.hint.lock')} ${String(next.id + 1).padStart(2, '0')} · ${directionName(p.axis, next.sign)} ${t('msg.hint.dir')}`,
         );
       }
       return;
@@ -327,21 +329,19 @@ export default function Home() {
           setSelected(next.id);
         } else
           tell(
-            data.error
-              ? '暂时没能计算提示，请再试一次。'
-              : '当前局面没有找到解法，可以撤销后再试。',
+            data.error ? t('msg.nohint') : t('msg.nosolve'),
           );
       };
       worker.onerror = () => {
         setThinking(false);
         worker.terminate();
         workerRef.current = null;
-        tell('提示计算暂时不可用，请再试一次。');
+        tell(t('msg.noavail'));
       };
       worker.postMessage({ request, board: snap.board });
     } catch {
       setThinking(false);
-      tell('浏览器暂时无法计算提示。');
+      tell(t('msg.no browser'));
     }
   }
   async function toggleFullscreen() {
@@ -349,9 +349,9 @@ export default function Home() {
       if (document.fullscreenElement) await document.exitFullscreen();
       else if (stageRef.current?.requestFullscreen)
         await stageRef.current.requestFullscreen();
-      else tell('当前浏览器不支持全屏，可以使用右上角放大。');
+      else tell(t('msg.nofull'));
     } catch {
-      tell('当前浏览器未能进入全屏，可以使用右上角放大。');
+      tell(t('msg.nofull2'));
     }
   }
   useEffect(() => {
@@ -408,20 +408,28 @@ export default function Home() {
     window.addEventListener('keydown', keydown);
     return () => window.removeEventListener('keydown', keydown);
   });
+  const dirName = (dx: number, dy: number) =>
+    dx > 0
+      ? t('dir.right')
+      : dx < 0
+        ? t('dir.left')
+        : dy > 0
+          ? t('dir.down')
+          : t('dir.up');
   const hintText = hint
-    ? `${NAMES[hint.id]}向${hint.dx > 0 ? '右' : hint.dx < 0 ? '左' : hint.dy > 0 ? '下' : '上'}移动一格。`
+    ? `${pieceName(hint.id, lang, NAMES[hint.id])} ${dirName(hint.dx, hint.dy)} ${t('hint.move.one')}`
     : '';
   return (
     <div className="shell">
       <header className="topbar">
-        <Link className="brand" href="/" aria-label="榫境首页">
+        <Link className="brand" href="/" aria-label={t('brand.home')}>
           <span className="brand-mark">榫</span>
           <div>
-            <div className="brand-name serif">榫境</div>
-            <div className="brand-en">SUNJING PUZZLES</div>
+            <div className="brand-name serif">{t('brand.name')}</div>
+            <div className="brand-en">{t('brand.sub')}</div>
           </div>
         </Link>
-        <nav className="topnav" aria-label="主导航">
+        <nav className="topnav" aria-label={lang === 'ar' ? 'التنقل الرئيسي' : lang === 'en' ? 'Main navigation' : '主导航'}>
           <button
             className="nav-item active"
             onClick={() =>
@@ -431,24 +439,25 @@ export default function Home() {
               })
             }
           >
-            解谜工坊
+            {t('nav.workshop')}
           </button>
           <button
             className="nav-item nav-culture"
             onClick={() => setDialog('culture')}
           >
-            榫卯小记
+            {t('nav.culture')}
           </button>
           <button className="nav-item" onClick={() => setDialog('help')}>
-            玩法指南 <ArrowUpRight size={13} />
+            {t('nav.help')} <ArrowUpRight size={13} />
           </button>
         </nav>
         <div className="header-meta">
+          <LangSwitcher lang={lang} setLang={setLang} t={t} />
           <i className="status-dot" />
-          <span>慢一点，巧一点。</span>
+          <span>{t('nav.slogan')}</span>
           <button
             className="round-button"
-            aria-label="查看操作帮助"
+            aria-label={t('nav.help')}
             onClick={() => setDialog('help')}
           >
             <CircleHelp size={16} />
@@ -458,31 +467,32 @@ export default function Home() {
       <main>
         <div className="intro">
           <div>
-            <div className="eyebrow">THE ART OF UNLOCKING</div>
-            <h1 className="serif">解一方木，得一方趣。</h1>
-            <p>转动、观察、尝试。让古老巧思，在指尖重新发生。</p>
+            <div className="eyebrow">{t('intro.eyebrow')}</div>
+            <h1 className="serif">{t('intro.h1')}</h1>
+            <p>{t('intro.p')}</p>
           </div>
           <div className="intro-note">
-            <Leaf size={14} /> 不赶时间，只动脑筋
+            <Leaf size={14} /> {t('intro.note')}
           </div>
         </div>
         <div className="workbench">
           <section
             className={`stage ${isLock ? '' : 'board-stage'}`}
             ref={stageRef}
-            aria-label="三维游戏区域"
+            aria-label={lang === 'ar' ? 'منطقة اللعب ثلاثية الأبعاد' : lang === 'en' ? '3D play area' : '三维游戏区域'}
           >
             <div className="stage-top">
               <span className="stage-pill">
-                <i className="status-dot" /> {isLock ? '榫卯机关' : '移动棋局'}
+                <i className="status-dot" />{' '}
+                {isLock ? t('stage.lock') : t('stage.board')}
               </span>
               <span className="stage-pill">
-                {isLock ? '360° 自由探索' : '3D 木作棋盘'}
+                {isLock ? t('stage.free') : t('stage.wood')}
               </span>
             </div>
             <span className="stage-overline">{game.label}</span>
             <span className="stage-watermark" aria-hidden="true">
-              {isLock ? '榫卯之趣' : '方寸乾坤'}
+              {gameText(game.id, 'stage', lang, game.stage)}
             </span>
             <PuzzleScene
               pieces={PIECES}
@@ -499,8 +509,8 @@ export default function Home() {
             <div className="scene-tools">
               <button
                 className="scene-tool"
-                aria-label="缩小木作"
-                title="缩小"
+                aria-label={t('stage.zoom.out')}
+                title={t('stage.zoom.out')}
                 onClick={() => setZoom((z) => Math.max(70, z - 10))}
                 disabled={zoom <= 70}
               >
@@ -508,8 +518,8 @@ export default function Home() {
               </button>
               <button
                 className="scene-tool"
-                aria-label="放大木作"
-                title="放大"
+                aria-label={t('stage.zoom.in')}
+                title={t('stage.zoom.in')}
                 onClick={() => setZoom((z) => Math.min(140, z + 10))}
                 disabled={zoom >= 140}
               >
@@ -517,22 +527,24 @@ export default function Home() {
               </button>
               <button
                 className="scene-tool"
-                aria-label={fullscreen ? '退出全屏' : '全屏查看'}
-                title="全屏"
+                aria-label={fullscreen ? t('stage.unfull') : t('stage.full')}
+                title={t('stage.full')}
                 onClick={toggleFullscreen}
               >
                 {fullscreen ? <Minimize /> : <Expand />}
               </button>
             </div>
             <div className="stage-caption">
-              {game.stage}
+              {gameText(game.id, 'stage', lang, game.stage)}
               <small>{game.english}</small>
             </div>
             {message && <output className="stage-status">{message}</output>}
             <div className="zoom-slider">
-              <div className="zoom-label">ZOOM {zoom}%</div>
+              <div className="zoom-label">
+                {t('stage.zoom')} {zoom}%
+              </div>
               <Slider
-                aria-label="模型缩放"
+                aria-label={t('stage.model')}
                 min={70}
                 max={140}
                 step={5}
@@ -543,7 +555,7 @@ export default function Home() {
             <div className="stage-bottom">
               <span className="gesture-note">
                 <MousePointer2 size={14} />
-                {isLock ? '拖动旋转 · 点击选择木块' : '点击选择 · 轻扫移动棋子'}
+                {isLock ? t('stage.gesture.lock') : t('stage.gesture.board')}
               </span>
               <button
                 className="view-reset"
@@ -553,41 +565,51 @@ export default function Home() {
                 }}
               >
                 <RotateCcw />
-                还原视角
+                {t('stage.view.reset')}
               </button>
             </div>
           </section>
           <aside
             className={`panel ${isLock ? '' : 'huarong-panel'}`}
-            aria-label="解谜控制台"
+            aria-label={lang === 'ar' ? 'لوحة التحكم' : lang === 'en' ? 'Puzzle console' : '解谜控制台'}
           >
             <div className="panel-head-section">
               <div className="panel-heading">
                 <span className="eyebrow">
-                  PUZZLE{' '}
+                  {t('panel.puzzle')}{' '}
                   {GAMES.findIndex((g) => g.id === gameId) + 1 < 10 ? '0' : ''}
                   {GAMES.findIndex((g) => g.id === gameId) + 1}
                 </span>
-                <span className="level-tag">{game.level}</span>
+                <span className="level-tag">
+                  {gameText(game.id, 'level', lang, game.level)}
+                </span>
               </div>
-              <h2 className="serif">{isLock ? '孔明锁' : '华容道'}</h2>
-              <p className="panel-desc">{game.objective}</p>
+              <h2 className="serif">
+                {isLock ? t('panel.lock.name') : t('panel.board.name')}
+              </h2>
+              <p className="panel-desc">
+                {gameText(game.id, 'objective', lang, game.objective)}
+              </p>
               <div className="stats">
                 <div className="stat">
                   <span className="stat-label">
-                    {isLock ? '已解木块' : '当前步数'}
+                    {isLock ? t('stat.wood') : t('stat.moves')}
                   </span>
                   <span className="stat-value">
                     {isLock ? snap.removed.length : snap.moves}
-                    <small>{isLock ? `/ ${PIECES.length}` : '步'}</small>
+                    <small>
+                      {isLock ? `/ ${PIECES.length}` : t('unit.step')}
+                    </small>
                   </span>
                 </div>
                 <div className="stat">
-                  <span className="stat-label">用时</span>
+                  <span className="stat-label">{t('stat.time')}</span>
                   <span className="stat-value">{formatTime(seconds)}</span>
                 </div>
                 <div className="stat">
-                  <span className="stat-label">{isLock ? '步数' : '目标'}</span>
+                  <span className="stat-label">
+                    {isLock ? t('stat.steps') : t('stat.goal')}
+                  </span>
                   <span className="stat-value">
                     {isLock ? snap.moves : <Target size={18} />}
                   </span>
@@ -596,11 +618,11 @@ export default function Home() {
             </div>
             <div className="panel-controls">
               <div className="section-label">
-                {isLock ? '选择一根木块' : '选择一枚棋子'}
+                {isLock ? t('panel.pick.lock') : t('panel.pick.board')}
                 <span>
                   {isLock
-                    ? '编号 01—' + String(PIECES.length).padStart(2, '0')
-                    : '也可点击棋盘'}
+                    ? t('panel.range')
+                    : t('panel.click')}
                 </span>
               </div>
               {isLock ? (
@@ -609,7 +631,7 @@ export default function Home() {
                     {PIECES.map((p) => (
                       <button
                         key={p.id}
-                        aria-label={`${p.id + 1} 号木${snap.removed.includes(p.id) ? '，已取出' : ''}`}
+                        aria-label={`#${String(p.id + 1).padStart(2, '0')}${snap.removed.includes(p.id) ? ' ✓' : ''}`}
                         aria-pressed={selected === p.id}
                         disabled={snap.removed.includes(p.id) || complete}
                         className={`piece-button ${selected === p.id ? 'selected' : ''} ${snap.removed.includes(p.id) ? 'removed' : ''}`}
@@ -632,8 +654,8 @@ export default function Home() {
                       <ArrowLeft />{' '}
                       {selectedPiece
                         ? directionName(selectedPiece.axis, -1)
-                        : '反向'}{' '}
-                      抽出
+                        : t('move.neg')}{' '}
+                      {t('move.out')}
                     </button>
                     <button
                       className="move-button"
@@ -642,14 +664,14 @@ export default function Home() {
                     >
                       {selectedPiece
                         ? directionName(selectedPiece.axis, 1)
-                        : '正向'}{' '}
-                      抽出 <ArrowRight />
+                        : t('move.pos')}{' '}
+                      {t('move.out')} <ArrowRight />
                     </button>
                   </div>
                   <p className="selected-label">
                     {selectedPiece
-                      ? `已选 ${String(selectedPiece.id + 1).padStart(2, '0')} 号木 · 沿木块长轴尝试抽出`
-                      : '细看交接处，找到第一根可以活动的木。'}
+                      ? `${t('pick.piece')} ${String(selectedPiece.id + 1).padStart(2, '0')} ${t('pick.hint.lock')}`
+                      : t('pick.hint')}
                   </p>
                 </>
               ) : (
@@ -663,16 +685,16 @@ export default function Home() {
                         disabled={complete}
                         onClick={() => select(p.id)}
                       >
-                        {NAMES[p.id]}
+                        {pieceName(p.id, lang, NAMES[p.id])}
                       </button>
                     ))}
                   </div>
                   <div className="direction-pad">
                     {[
-                      { dx: 0, dy: -1, label: '向上', icon: <ArrowUp /> },
-                      { dx: -1, dy: 0, label: '向左', icon: <ArrowLeft /> },
-                      { dx: 0, dy: 1, label: '向下', icon: <ArrowDown /> },
-                      { dx: 1, dy: 0, label: '向右', icon: <ArrowRight /> },
+                      { dx: 0, dy: -1, label: t('dir.up'), icon: <ArrowUp /> },
+                      { dx: -1, dy: 0, label: t('dir.left'), icon: <ArrowLeft /> },
+                      { dx: 0, dy: 1, label: t('dir.down'), icon: <ArrowDown /> },
+                      { dx: 1, dy: 0, label: t('dir.right'), icon: <ArrowRight /> },
                     ].map((d) => (
                       <button
                         key={d.label}
@@ -687,7 +709,8 @@ export default function Home() {
                   </div>
                   {hint && (
                     <output className="hint-detail">
-                      {hintText}点击「走这一步」尝试。
+                      {hintText}
+                      {t('hint.detail.try')}
                     </output>
                   )}
                 </>
@@ -701,12 +724,12 @@ export default function Home() {
               >
                 {complete ? <Check /> : thinking ? <Timer /> : <Lightbulb />}
                 {complete
-                  ? '已解开，查看成果'
+                  ? t('hint.btn.done')
                   : thinking
-                    ? '正在寻找解法…'
+                    ? t('hint.btn.thinking')
                     : hint
-                      ? '走这一步'
-                      : '给我一点提示'}
+                      ? t('hint.btn.go')
+                      : t('hint.btn.need')}
               </button>
               <div className="sub-actions">
                 <button
@@ -715,19 +738,17 @@ export default function Home() {
                   onClick={undo}
                 >
                   <Undo2 />
-                  撤销一步
+                  {t('btn.undo')}
                 </button>
                 <button className="text-action" onClick={reset}>
                   <RotateCcw />
-                  重新开始
+                  {t('btn.reset')}
                 </button>
               </div>
             </div>
             <div className="panel-foot">
               <Sparkles />
-              {complete
-                ? '巧思已解，下一方天地等你探索'
-                : '每一次尝试，都是接近答案的一步'}
+              {complete ? t('panel.done') : t('panel.try')}
             </div>
           </aside>
         </div>
@@ -735,29 +756,31 @@ export default function Home() {
           <div className="step-guide">
             <span>
               <b>1</b>
-              {isLock ? '转动，观察结构' : '观察，找到空位'}
+              {isLock ? t('steps.1.lock') : t('steps.1.board')}
             </span>
             <span>
               <b>2</b>
-              {isLock ? '点击，选中木块' : '点击，选中棋子'}
+              {isLock ? t('steps.2.lock') : t('steps.2.board')}
             </span>
             <span>
               <b>3</b>
-              {isLock ? '抽出，解开机关' : '移动，打开出口'}
+              {isLock ? t('steps.3.lock') : t('steps.3.board')}
             </span>
           </div>
           <div className="auto-save">
             <Save />
-            {saved ? '进度已保存在此设备' : '无需登录，即点即玩'}
+            {saved ? t('save.ok') : t('save.no')}
           </div>
         </div>
-        <section className="collection" aria-label="选择游戏">
+        <section className="collection" aria-label={lang === 'ar' ? 'اختيار اللعبة' : lang === 'en' ? 'Choose a game' : '选择游戏'}>
           <div className="collection-head">
             <div className="collection-title">
-              <h3 className="serif">一器一局，各有巧思</h3>
-              <span>THE COLLECTION</span>
+              <h3 className="serif">{t('collection.h1')}</h3>
+              <span>{t('collection.en')}</span>
             </div>
-            <span className="collection-note">探索 {GAMES.length} 个关卡</span>
+            <span className="collection-note">
+              {t('collection.levels').replace('3', String(GAMES.length))}
+            </span>
           </div>
           <div className="cards">
             {GAMES.map((g, i) => (
@@ -772,18 +795,24 @@ export default function Home() {
                 </div>
                 <div className="card-main">
                   <div className="card-top">
-                    {i === 0 ? '空间解构' : i === 1 ? '轻松入门' : '经典挑战'}
+                    {i === 0
+                      ? t('card.0.tag')
+                      : i === 1
+                        ? t('card.1.tag')
+                        : t('card.2.tag')}
                     <span
                       className="difficulty"
-                      aria-label={`难度 ${g.difficulty} 级`}
+                      aria-label={`${lang === 'ar' ? 'الصعوبة' : lang === 'en' ? 'Difficulty' : '难度'} ${g.difficulty}`}
                     >
                       {[1, 2, 3].map((n) => (
                         <i className={n <= g.difficulty ? 'on' : ''} key={n} />
                       ))}
                     </span>
                   </div>
-                  <h4>{g.title}</h4>
-                  <div className="card-sub">{g.desc}</div>
+                  <h4>{gameText(g.id, 'title', lang, g.title)}</h4>
+                  <div className="card-sub">
+                    {gameText(g.id, 'desc', lang, g.desc)}
+                  </div>
                 </div>
                 {gameId === g.id ? (
                   <Check className="card-arrow" />
@@ -797,10 +826,10 @@ export default function Home() {
       </main>
       <footer className="footer">
         <span className="footer-brand">
-          <Leaf /> 榫境 SUNJING · 在指尖，遇见东方巧思
+          <Leaf /> {t('footer.brand')}
         </span>
-        <span className="footer-text">以木为器 · 以巧为钥</span>
-        <span>慢慢玩，慢慢解。</span>
+        <span className="footer-text">{t('footer.a')}</span>
+        <span>{t('footer.b')}</span>
       </footer>
       <Dialog
         open={dialog !== null}
@@ -813,41 +842,37 @@ export default function Home() {
         >
           {dialog === 'help' && (
             <>
-              <DialogTitle>动手之前，一点小窍门。</DialogTitle>
-              <DialogDescription>
-                当前局内的移动可以撤销。放心尝试，让每一步都有新发现。
-              </DialogDescription>
+              <DialogTitle>{t('help.title')}</DialogTitle>
+              <DialogDescription>{t('help.desc')}</DialogDescription>
               <Tabs
                 defaultValue={isLock ? 'lock' : 'board'}
                 className="settings-tabs"
               >
                 <TabsList>
-                  <TabsTrigger value="lock">孔明锁</TabsTrigger>
-                  <TabsTrigger value="board">华容道</TabsTrigger>
+                  <TabsTrigger value="lock">{t('help.tab.lock')}</TabsTrigger>
+                  <TabsTrigger value="board">{t('help.tab.board')}</TabsTrigger>
                 </TabsList>
                 <TabsContent value="lock">
                   <div className="help-list">
                     <div className="help-step">
                       <b>1</b>
                       <div>
-                        <strong>转一转，看清交接处</strong>
-                        在展台上拖动鼠标或手指，观察每根木块。用 ＋ / −
-                        调整大小。
+                        <strong>{t('help.lock.1.t')}</strong>
+                        {t('help.lock.1.d')}
                       </div>
                     </div>
                     <div className="help-step">
                       <b>2</b>
                       <div>
-                        <strong>选一根，沿长轴试着抽出</strong>
-                        点击木块或右侧编号，再点击正向 /
-                        反向抽出。木块互相阻挡时，需要先找到关键木。
+                        <strong>{t('help.lock.2.t')}</strong>
+                        {t('help.lock.2.d')}
                       </div>
                     </div>
                     <div className="help-step">
                       <b>3</b>
                       <div>
-                        <strong>取出全部木块，即可过关</strong>
-                        数字键选择木块；方向键抽出；Z 撤销；R 重置。
+                        <strong>{t('help.lock.3.t')}</strong>
+                        {t('help.lock.3.d')}
                       </div>
                     </div>
                   </div>
@@ -857,48 +882,43 @@ export default function Home() {
                     <div className="help-step">
                       <b>1</b>
                       <div>
-                        <strong>给曹操留出一条路</strong>
-                        棋盘下方中央是出口。把曹操的 2 × 2
-                        大方块移到那里，即可过关。
+                        <strong>{t('help.board.1.t')}</strong>
+                        {t('help.board.1.d')}
                       </div>
                     </div>
                     <div className="help-step">
                       <b>2</b>
                       <div>
-                        <strong>每次移动一格，不可越过棋子</strong>
-                        点击棋子后按方向按钮或键盘方向键，也可直接在棋子上轻扫。
+                        <strong>{t('help.board.2.t')}</strong>
+                        {t('help.board.2.d')}
                       </div>
                     </div>
                     <div className="help-step">
                       <b>3</b>
                       <div>
-                        <strong>没有头绪时，用一点提示</strong>
-                        系统会为当前局面寻找解法。再次点击「走这一步」即可执行提示；每移动一格计一步。
+                        <strong>{t('help.board.3.t')}</strong>
+                        {t('help.board.3.d')}
                       </div>
                     </div>
                   </div>
                 </TabsContent>
               </Tabs>
-              <p className="note-block">
-                当前关卡会自动保存在此设备。切换关卡会开启新的一局；重新开始会清空当前进度。
-              </p>
+              <p className="note-block">{t('help.note')}</p>
             </>
           )}
           {dialog === 'culture' && (
             <>
-              <span className="eyebrow">NOTES ON CRAFT</span>
-              <DialogTitle>不施钉胶，自有乾坤。</DialogTitle>
-              <DialogDescription>
-                榫是凸出的部分，卯是与之相合的孔槽。形状彼此咬合，让木与木之间产生巧妙的约束。
-              </DialogDescription>
+              <span className="eyebrow">{t('culture.eyebrow')}</span>
+              <DialogTitle>{t('culture.title')}</DialogTitle>
+              <DialogDescription>{t('culture.desc')}</DialogDescription>
               <div className="help-list">
                 <div className="help-step">
                   <b>
                     <Box size={14} />
                   </b>
                   <div>
-                    <strong>孔明锁 · 从结构里找答案</strong>
-                    看似牢固的一体，往往藏着一个可以先行移动的构件。观察空隙，比用力更有用。
+                    <strong>{t('culture.lock.t')}</strong>
+                    {t('culture.lock.d')}
                   </div>
                 </div>
                 <div className="help-step">
@@ -906,14 +926,12 @@ export default function Home() {
                     <Grid2X2 size={14} />
                   </b>
                   <div>
-                    <strong>华容道 · 为下一步留下空间</strong>
-                    棋子不能越过彼此。先让路，再前进，有时暂时后退才能打开新的局面。
+                    <strong>{t('culture.board.t')}</strong>
+                    {t('culture.board.d')}
                   </div>
                 </div>
               </div>
-              <p className="note-block">
-                本作孔明锁是基于榫卯互锁原理的教学改编，采用沿木块长轴抽出的规则。名称沿用民间称谓，不作特定历史人物发明或古物复原的认定。
-              </p>
+              <p className="note-block">{t('culture.note')}</p>
             </>
           )}
           {dialog === 'success' && (
@@ -922,11 +940,12 @@ export default function Home() {
                 <Check size={30} />
               </div>
               <span className="eyebrow">BEAUTIFULLY UNLOCKED</span>
-              <DialogTitle>巧思已解，豁然开朗。</DialogTitle>
+              <DialogTitle>{t('success.done')}</DialogTitle>
               <DialogDescription>
-                你解开了「{game.title}」。
+                {t('success.you')}
+                {gameText(game.id, 'title', lang, game.title)} —
                 <br />
-                这次用了 {snap.moves} 步，{formatTime(seconds)}。
+                {t('success.moves')} {snap.moves} · {formatTime(seconds)}
               </DialogDescription>
               <button
                 className="hint-button"
@@ -940,7 +959,7 @@ export default function Home() {
                   );
                 }}
               >
-                探索下一局 <ArrowRight />
+                {t('success.next')} <ArrowRight />
               </button>
               <button
                 className="text-action"
@@ -948,7 +967,7 @@ export default function Home() {
                 onClick={reset}
               >
                 <RotateCcw />
-                再玩一次
+                {t('success.again')}
               </button>
             </>
           )}
@@ -956,8 +975,8 @@ export default function Home() {
       </Dialog>
       <output className="sr-only" aria-live="polite">
         {isLock
-          ? `已取出 ${snap.removed.length} 根木块`
-          : `已移动 ${snap.moves} 步`}
+          ? `${snap.removed.length} ${t('sr.lock')}`
+          : `${snap.moves} ${t('sr.board')}`}
       </output>
     </div>
   );

@@ -1,4 +1,5 @@
 import { WIDTH, HEIGHT, SHIPS, WEAPONS, STAGES, UPGRADES, STAGE_SECONDS, BOSS_AT, DROP_TTL } from './data.js';
+import { pickupLabel } from './i18n.js';
 
 export const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const TAU = Math.PI * 2;
@@ -357,10 +358,10 @@ export class Game {
     let label;
     if (drop.kind === 'weapon') {
       p.weapon = drop.weapon; p.levels[drop.weapon] = Math.min(5, p.levels[drop.weapon] + 1); p.weaponLevel = p.levels[drop.weapon];
-      label = `${WEAPONS[drop.weapon].name} Lv.${p.weaponLevel}`; this.addCharge(5);
-    } else if (drop.kind === 'repair') { p.health = Math.min(p.maxHealth, p.health + 2); label = '机体修复 +2'; }
-    else if (drop.kind === 'shield') { p.shield = Math.min(p.maxShield, p.shield + 1); label = '护盾恢复'; }
-    else { p.bombs = Math.min(5, p.bombs + 1); label = '震荡炸弹 +1'; }
+      label = pickupLabel('weapon', drop.weapon, p.weaponLevel); this.addCharge(5);
+    } else if (drop.kind === 'repair') { p.health = Math.min(p.maxHealth, p.health + 2); label = pickupLabel('repair'); }
+    else if (drop.kind === 'shield') { p.shield = Math.min(p.maxShield, p.shield + 1); label = pickupLabel('shield'); }
+    else { p.bombs = Math.min(5, p.bombs + 1); label = pickupLabel('bomb'); }
     this.score += 150; this.fx('text', p.x, p.y - 40, WEAPONS[drop.weapon]?.color || '#bcffe7', 17, label); this.emit('pickup', { label });
   }
   completeStage() {

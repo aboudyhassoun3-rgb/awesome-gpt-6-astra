@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 
 // An articulated, procedural avatar: all motion is generated locally, with no asset downloads.
 export function mountDriverStudio(host, isVisible) {
@@ -92,7 +93,7 @@ export function mountDriverStudio(host, isVisible) {
   buttons.forEach(button=>button.addEventListener('click',()=>{
     action=button.dataset.action;phase=0;
     buttons.forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-pressed',String(b===button));});
-    host.querySelector('.driver-action').textContent={stand:'STANDING BY',dance:'DANCE / STREET GROOVE',victory:'VICTORY / CELEBRATE'}[action];
+    host.querySelector('.driver-action').textContent={stand:t('standingBy'),dance:t('danceLabel'),victory:t('victoryLabel')}[action];
   }));
   canvas.addEventListener('pointerdown',e=>{dragX=e.clientX;canvas.setPointerCapture(e.pointerId);});
   canvas.addEventListener('pointermove',e=>{if(dragX!==null){rotation+=(e.clientX-dragX)*.012;dragX=e.clientX;}});

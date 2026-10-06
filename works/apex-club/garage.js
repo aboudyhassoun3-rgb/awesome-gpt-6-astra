@@ -1,5 +1,26 @@
 import * as THREE from 'three';
 import {createArmoredKart} from './armored-kart.js';
+import {STRINGS, getLang, setLang, applyDocumentLang} from './i18n.js';
+function applyGarageI18n(lang){
+  const l = lang || getLang();
+  const dict = STRINGS[l] || STRINGS.ar;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const v = dict[el.dataset.i18n];
+    if (v !== undefined) el.textContent = v;
+  });
+  document.title = dict.garageTitle;
+  const canvas = document.querySelector('#view');
+  if (canvas) canvas.setAttribute('aria-label', dict.canvasGarageAria);
+  const colors = { '29bfc5': dict.colorTeal, 'ec9854': dict.colorCopper, 'd5dce0': dict.colorSilver };
+  document.querySelectorAll('[data-color]').forEach(b=>{ if (colors[b.dataset.color]) b.setAttribute('aria-label', colors[b.dataset.color]); });
+  const toggle = document.querySelector('#langToggle');
+  if (toggle) toggle.textContent = dict.langToggle;
+}
+applyDocumentLang(); applyGarageI18n();
+document.querySelector('#langToggle')?.addEventListener('click',()=>{
+  const next = setLang(getLang() === 'ar' ? 'en' : 'ar');
+  applyGarageI18n(next);
+});
 try{
 const canvas=document.querySelector('#view'),host=canvas.parentElement;
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;

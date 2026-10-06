@@ -55,9 +55,22 @@ import * as E from './engine';
 import Portrait from './Portrait';
 import { Input } from '@/components/ui/input';
 import type { Game as State, Playable, Action } from './engine';
+import {
+  useLang,
+  LangSwitcher,
+  cityName,
+  factionName,
+  specialtyName,
+} from '@/lib/i18n';
 const fmt = (n: number) => Math.round(n).toLocaleString('zh-CN');
-const compact = (n: number) =>
-  n >= 10000 ? `${(n / 10000).toFixed(1)}万` : fmt(n);
+const compactFor = (lang: 'ar' | 'zh' | 'en', n: number) =>
+  n >= 10000
+    ? lang === 'zh'
+      ? `${(n / 10000).toFixed(1)}万`
+      : lang === 'ar'
+        ? `${(n / 1000).toFixed(1)} ألف`
+        : `${(n / 1000).toFixed(1)}K`
+    : fmt(n);
 const icons = {
   farm: Wheat,
   market: TrendingUp,
@@ -68,8 +81,9 @@ const icons = {
 declare const __TERRAIN_URL__: string;
 const terrain =
   typeof __TERRAIN_URL__ !== 'undefined' ? __TERRAIN_URL__ : '/terrain.jpg';
-const gameFileName = '三分天下-存档.json';
+const gameFileName = 'three-kingdoms-save.json';
 export default function Game() {
+  const { lang, setLang, t } = useLang();
   const [g, setG] = useState<State>(() => E.newGame());
   const [query, setQuery] = useState('');
   const [rosterFilter, setRosterFilter] = useState('mine');
@@ -86,8 +100,8 @@ export default function Game() {
   const [target, setTarget] = useState('');
   const [requestedTroops, setTroops] = useState(8000);
   const [officer, setOfficer] = useState('guan');
-  const [notice, setNotice] = useState('先发展城池，再率军逐鹿天下。');
-  const [saving, setSaving] = useState('本地自动存档');
+  const [notice, setNotice] = useState('طوّر مدنك أولًا، ثم قُد جيوشك لتوحيد العالم.');
+  const [saving, setSaving] = useState('حفظ تلقائي محلي');
   const [sound, setSound] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [busy, setBusy] = useState(false);
@@ -107,11 +121,11 @@ export default function Game() {
         setFaction(saved.player);
         setAdministrator('auto');
         setSelected(E.owned(saved, saved.player)[0]?.id || 'chengdu');
-        setNotice('已续接上次战局。');
+        setNotice(t('notice.resume'));
       } else setSetup(true);
     } catch {
       setSetup(true);
-      setSaving('存档不可用，可手动导出');
+      setSaving(t('saving.unavail'));
     }
     setReady(true);
   }, []);
@@ -119,9 +133,9 @@ export default function Game() {
     if (!ready || setup) return;
     try {
       localStorage.setItem(E.STORAGE_KEY, JSON.stringify(g));
-      setSaving('进度已自动保存');
+      setSaving(t('saving.auto'));
     } catch {
-      setSaving('请导出存档保存进度');
+      setSaving(t('saving.export'));
     }
   }, [g, ready, setup]);
   /* eslint-enable react/react-compiler */
@@ -208,7 +222,7 @@ export default function Game() {
     setSelected(E.FACTIONS[faction].capital);
     setView('map');
     setSetup(false);
-    setNotice('建议：征募兵卒 → 选择相邻城池出征 → 结束回合。');
+    setNotice(t('notice.suggest'));
     ping();
   }
   function openMarch(destination?: string) {
@@ -245,10 +259,10 @@ export default function Game() {
         setG(next);
         setNotice(
           next.status === 'playing'
-            ? `第 ${next.turn} 回合开始。请查看下方战报。`
+            ? t('notice.turn').replace('{n}', String(next.turn))
             : next.status === 'won'
-              ? '天下一统！你的征程已载入史册。'
-              : '最后一城失守，可另启新局再战。',
+              ? t('notice.won')
+              : t('notice.lost'),
         );
         ping(true);
       } catch (error) {
@@ -267,7 +281,7 @@ export default function Game() {
     a.download = gameFileName;
     a.click();
     URL.revokeObjectURL(a.href);
-    setNotice('存档已导出，可在其他浏览器中导入。');
+    setNotice(t('notice.exported'));
   }
   async function importSave(file?: File) {
     if (!file) return;
@@ -277,7 +291,7 @@ export default function Game() {
       setFaction(saved.player);
       setAdministrator('auto');
       setSelected(E.owned(saved, saved.player)[0]?.id || 'chengdu');
-      setNotice('存档已载入。');
+      setNotice(t('notice.imported'));
       setHelp(false);
     } catch (error) {
       setNotice((error as Error).message);
@@ -296,11 +310,11 @@ export default function Game() {
       <header className="topbar">
         <div className="brand">
           <span className="brand-seal">
-            三<br />国
+            {t('brand.seal').split('').join('\n')}
           </span>
           <div>
-            <h1>三分天下</h1>
-            <span>群 雄 逐 鹿</span>
+            <h1>{t('brand.title')}</h1>
+            <span>{t('brand.sub')}</span>
           </div>
         </div>
         <div className="top-divider" />
@@ -313,7 +327,9 @@ export default function Game() {
             {me.seal}
           </span>
           <div>
-            <strong>{me.name}势力</strong>
+            <strong>
+              {factionName(g.player, lang)} {lang === 'zh' ? '势力' : ''}
+            </strong>
             <small>{me.title}</small>
           </div>
         </div>
@@ -321,7 +337,7 @@ export default function Game() {
           <div>
             <Coins />
             <span>
-              <small>金钱</small>
+              <small>{t('res.gold')}</small>
               <strong>{fmt(resources.gold)}</strong>
             </span>
             <em>+{fmt(income.gold)}</em>
@@ -329,7 +345,7 @@ export default function Game() {
           <div>
             <Wheat />
             <span>
-              <small>军粮</small>
+              <small>{t('res.food')}</small>
               <strong>{fmt(resources.food)}</strong>
             </span>
             <em>
@@ -340,34 +356,35 @@ export default function Game() {
           <div className="troop-total">
             <Users />
             <span>
-              <small>总兵力</small>
+              <small>{t('res.troops')}</small>
               <strong>{fmt(totalTroops)}</strong>
             </span>
           </div>
         </div>
+        <LangSwitcher lang={lang} setLang={setLang} t={t} />
         <button
           className="icon-button"
-          aria-label={sound ? '关闭音效' : '开启音效'}
-          title={sound ? '关闭音效' : '开启音效'}
+          aria-label={sound ? t('sound.on') : t('sound.off')}
+          title={sound ? t('sound.on') : t('sound.off')}
           onClick={() => setSound(!sound)}
         >
           {sound ? <Volume2 /> : <VolumeX />}
         </button>
         <button
           className="icon-button help-icon"
-          aria-label="玩法与存档"
-          title="玩法与存档"
+          aria-label={t('help.open')}
+          title={t('help.open')}
           onClick={() => setHelp(true)}
         >
           <HelpCircle />
         </button>
       </header>
       <div className="game-body">
-        <nav className="rail" aria-label="游戏视图">
+        <nav className="rail" aria-label={t('nav.view')}>
           {[
-            ['map', '天下', Map],
-            ['officers', '武将', Users],
-            ['chronicle', '战报', ScrollText],
+            ['map', t('view.map'), Map],
+            ['officers', t('view.officers'), Users],
+            ['chronicle', t('view.chronicle'), ScrollText],
           ].map(([id, label, Icon]) => {
             const I = Icon as typeof Map;
             return (
@@ -383,32 +400,32 @@ export default function Game() {
             );
           })}
           <div className="rail-spacer" />
-          <button onClick={exportSave} aria-label="导出存档">
+          <button onClick={exportSave} aria-label={t('nav.save')}>
             <Save />
-            <span>存档</span>
+            <span>{t('nav.save')}</span>
           </button>
-          <button onClick={() => setRestart(true)} aria-label="另启新局">
+          <button onClick={() => setRestart(true)} aria-label={t('nav.new')}>
             <RotateCcw />
-            <span>新局</span>
+            <span>{t('nav.new')}</span>
           </button>
-          <span className="rail-bottom">建安十三年</span>
+          <span className="rail-bottom">{t('era')}</span>
         </nav>
         <main className="world">
           <div className="world-head">
             <div>
-              <span className="eyebrow">天下大势</span>
+              <span className="eyebrow">{t('world.trend')}</span>
               <h2>
                 {view === 'map'
-                  ? '江山如画'
+                  ? t('world.map')
                   : view === 'officers'
-                    ? '帐下群英'
-                    : '征战纪事'}
+                    ? t('world.officers')
+                    : t('world.chronicle')}
               </h2>
             </div>
             <div className="scenario">
-              <span className="live-dot" /> 英雄集结{' '}
+              <span className="live-dot" /> {t('scenario.a')}{' '}
               <span className="scenario-sep">/</span>
-              <span>自由推演</span>
+              <span>{t('scenario.b')}</span>
             </div>
           </div>
           <div
@@ -424,10 +441,18 @@ export default function Game() {
               }}
             >
               <div className="map-shade" />
-              <span className="region region-west">益 州</span>
-              <span className="region region-north">司 隶</span>
-              <span className="region region-east">扬 州</span>
-              <span className="region region-center">荆 州</span>
+              <span className="region region-west">
+                {lang === 'zh' ? '益 州' : t('region.west')}
+              </span>
+              <span className="region region-north">
+                {lang === 'zh' ? '司 隶' : t('region.north')}
+              </span>
+              <span className="region region-east">
+                {lang === 'zh' ? '扬 州' : t('region.east')}
+              </span>
+              <span className="region region-center">
+                {lang === 'zh' ? '荆 州' : t('region.center')}
+              </span>
               <svg
                 className="road-map"
                 viewBox="0 0 100 100"
@@ -477,7 +502,7 @@ export default function Game() {
                     } as CSSProperties
                   }
                   onClick={() => selectCity(c.id)}
-                  aria-label={`${c.name}，${E.FACTIONS[c.owner].name}势力，驻军${fmt(c.troops)}`}
+                  aria-label={`${cityName(c.id, c.name, lang)} · ${factionName(c.owner, lang)} · ${fmt(c.troops)} ${t('unit.soldier')}`}
                   aria-pressed={c.id === selected}
                 >
                   <span className="city-halo" />
@@ -488,7 +513,7 @@ export default function Game() {
                     <i>{E.FACTIONS[c.owner].seal}</i>
                     <strong>{c.name}</strong>
                   </span>
-                  <span className="city-troops">{compact(c.troops)}</span>
+                  <span className="city-troops">{compactFor(lang, c.troops)}</span>
                 </button>
               ))}
               {g.armies.map((a) => {
@@ -503,16 +528,16 @@ export default function Game() {
                       top: `${(c.y + d.y) / 2}%`,
                       color: E.FACTIONS[a.owner].color,
                     }}
-                    title={`${compact(a.troops)}兵向${d.name}行军`}
+                    title={`${compactFor(lang, a.troops)} ${t('unit.soldier')} → ${cityName(d.id, d.name, lang)}`}
                   >
                     <Flag size={16} />
-                    <span>{compact(a.troops)}</span>
+                    <span>{compactFor(lang, a.troops)}</span>
                   </div>
                 );
               })}
               <div className="compass">
                 <Compass />
-                <span>北</span>
+                <span>{t('compass.north')}</span>
               </div>
             </div>
           </div>
@@ -520,25 +545,26 @@ export default function Game() {
             <>
               <div className="map-caption">
                 <span className="caption-line" />
-                建安十三年 · 风云初起<small>选择城池，运筹帷幄</small>
+                {t('map.caption')}
+                <small>{t('map.caption.small')}</small>
               </div>
               <div className="map-tools">
                 <button
-                  aria-label="放大地图"
+                  aria-label={t('map.zoom.in')}
                   disabled={zoom >= 1.8}
                   onClick={() => setZoom(Math.min(1.8, zoom + 0.2))}
                 >
                   <Plus />
                 </button>
                 <button
-                  aria-label="缩小地图"
+                  aria-label={t('map.zoom.out')}
                   disabled={zoom <= 1}
                   onClick={() => setZoom(Math.max(1, zoom - 0.2))}
                 >
                   <Minus />
                 </button>
                 <button
-                  aria-label="重置地图视野"
+                  aria-label={t('map.zoom.reset')}
                   onClick={() => {
                     setZoom(1);
                     mapScroll.current?.scrollTo(0, 0);
@@ -547,16 +573,14 @@ export default function Game() {
                   <LocateFixed />
                 </button>
                 <button
-                  aria-label={full ? '退出全屏' : '全屏游戏'}
+                  aria-label={full ? t('map.exitFullscreen') : t('map.fullscreen')}
                   onClick={() => {
                     if (document.fullscreenElement)
                       void document.exitFullscreen();
                     else
                       void shell.current
                         ?.requestFullscreen?.()
-                        .catch(() =>
-                          setNotice('此浏览器不支持全屏，可使用窗口最大化。'),
-                        );
+                        .catch(() => setNotice(t('notice.nofull')));
                   }}
                 >
                   {full ? <Minimize /> : <Maximize />}
@@ -568,22 +592,20 @@ export default function Game() {
             <section className="officer-view">
               <div className="roster-heading">
                 <div>
-                  <span className="eyebrow">百将风云 · 108 人图鉴</span>
-                  <p className="section-intro">
-                    统率领军，武力破阵，智略济世。
-                  </p>
+                  <span className="eyebrow">{t('officer.encyclopedia')}</span>
+                  <p className="section-intro">{t('officer.intro')}</p>
                 </div>
                 <span className="roster-count">
                   {visibleOfficers.length}
-                  <small> 位武将</small>
+                  <small> {t('officer.count')}</small>
                 </span>
               </div>
               <div className="roster-controls">
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="搜索姓名、定位或专长"
-                  aria-label="搜索武将"
+                  placeholder={t('officer.search')}
+                  aria-label={t('officer.search')}
                 />
                 <Select
                   value={rosterFilter}
@@ -593,25 +615,27 @@ export default function Game() {
                     <SelectValue>
                       {
                         {
-                          mine: '我方武将',
-                          all: '天下群英',
-                          wei: '曹操势力',
-                          shu: '刘备势力',
-                          wu: '孙权势力',
+                          mine: t('filter.mine'),
+                          all: t('filter.all'),
+                          wei: t('filter.wei'),
+                          shu: t('filter.shu'),
+                          wu: t('filter.wu'),
                         }[rosterFilter]
                       }
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries({
-                      mine: '我方武将',
-                      all: '天下群英',
-                      wei: '曹操势力',
-                      shu: '刘备势力',
-                      wu: '孙权势力',
-                    }).map(([v, t]) => (
+                    {(
+                      [
+                        ['mine', t('filter.mine')],
+                        ['all', t('filter.all')],
+                        ['wei', t('filter.wei')],
+                        ['shu', t('filter.shu')],
+                        ['wu', t('filter.wu')],
+                      ] as [string, string][]
+                    ).map(([v, label]) => (
                       <SelectItem key={v} value={v}>
-                        {t}
+                        {label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -623,7 +647,7 @@ export default function Game() {
                     className="officer-card"
                     key={o.id}
                     onClick={() => setDetail(o)}
-                    aria-label={`查看${o.name}，统率${o.command}，武力${o.war}，智略${o.int}`}
+                    aria-label={`${o.name} · ${t('stat.command')}${o.command} ${t('stat.war')}${o.war} ${t('stat.int')}${o.int}`}
                   >
                     <div className="officer-portrait">
                       <Portrait officer={o} />
@@ -634,18 +658,32 @@ export default function Game() {
                         className="eyebrow"
                         style={{ color: E.FACTIONS[o.faction].color }}
                       >
-                        {E.FACTIONS[o.faction].name} · {o.role}
+                        {factionName(o.faction, lang)} · {o.role}
                       </span>
-                      <h3>{o.name}</h3>
+                      <h3>
+                        {o.name}
+                        {lang !== 'zh' && (
+                          <small
+                            style={{
+                              display: 'block',
+                              fontSize: 12,
+                              letterSpacing: 0,
+                              opacity: 0.7,
+                            }}
+                          >
+                            {specialtyName(o.specialty, t)}
+                          </small>
+                        )}
+                      </h3>
                       <div className="officer-stats">
                         <span>
-                          统 <b>{o.command}</b>
+                          {t('stat.command')} <b>{o.command}</b>
                         </span>
                         <span>
-                          武 <b>{o.war}</b>
+                          {t('stat.war')} <b>{o.war}</b>
                         </span>
                         <span>
-                          智 <b>{o.int}</b>
+                          {t('stat.int')} <b>{o.int}</b>
                         </span>
                       </div>
                       <p
@@ -655,25 +693,21 @@ export default function Game() {
                       >
                         <span className="live-dot" />
                         {g.armies.some((a) => a.officer === o.id)
-                          ? '领军出征'
+                          ? t('status.marching')
                           : E.officerAvailable(g, o.id)
-                            ? '本阵待命'
-                            : `休整 ${E.restRemaining(g, o.id)} 回合`}
+                            ? t('status.ready')
+                            : `${t('status.rest')} ${E.restRemaining(g, o.id)} ${t('status.rest.unit')}`}
                       </p>
                     </div>
                   </button>
                 ))}
               </div>
               {!visibleOfficers.length && (
-                <div className="roster-empty">
-                  没有找到对应武将，试试其他姓名或势力。
-                </div>
+                <div className="roster-empty">{t('officer.empty')}</div>
               )}
               <div className="note-panel">
                 <Flag />
-                <p>
-                  统率决定带兵上限；战力综合统率45%、武力35%、智略20%。智略还能节省行军军粮和内政金钱。执行一次指令后，下回合休整，再下一回合可用。
-                </p>
+                <p>{t('officer.note')}</p>
               </div>
             </section>
           )}
@@ -681,7 +715,9 @@ export default function Game() {
             <section className="chronicle-view">
               {g.logs.map((l) => (
                 <div className={`chronicle-item ${l.kind}`} key={l.id}>
-                  <span>第 {l.turn} 回合</span>
+                  <span>
+                    {t('turn.round')} {l.turn}
+                  </span>
                   <i />
                   <p>{l.text}</p>
                 </div>
@@ -693,32 +729,38 @@ export default function Game() {
               {(['wei', 'shu', 'wu', 'qun'] as const).map((f) => (
                 <span key={f}>
                   <i style={{ background: E.FACTIONS[f].color }} />
-                  {E.FACTIONS[f].name}
+                  {factionName(f, lang)}
                   <b>{E.owned(g, f).length}</b>
                 </span>
               ))}
             </div>
-            <span className="map-note">战略示意图</span>
+            <span className="map-note">{t('legend.map')}</span>
           </div>
         </main>
         <aside className="city-panel">
           <div className="city-panel-title">
-            <span className="eyebrow">城 池 情 报</span>
+            <span className="eyebrow">{t('city.intel')}</span>
             <span className={`ownership ${mine ? 'friendly' : ''}`}>
               {mine
-                ? '我方领地'
+                ? t('city.mine')
                 : city.owner === 'qun'
-                  ? '群雄割据'
-                  : '敌方领地'}
+                  ? t('city.contested')
+                  : t('city.enemy')}
             </span>
           </div>
           <div className="city-name-row">
             <div>
-              <h2>{city.name}</h2>
+              <h2>{cityName(city.id, city.name, lang)}</h2>
               <p>
-                <Flag size={13} /> {E.FACTIONS[city.owner].name}势力
+                <Flag size={13} /> {factionName(city.owner, lang)}
                 {city.occupation > 0 && (
-                  <span className="occupation">安民中 · 产出减半</span>
+                  <span className="occupation">
+                    {lang === 'ar'
+                      ? 'تهدئة · نصف إنتاج'
+                      : lang === 'en'
+                        ? 'Pacifying · half output'
+                        : '安民中 · 产出减半'}
+                  </span>
                 )}
               </p>
             </div>
@@ -731,35 +773,35 @@ export default function Game() {
           </div>
           <div className="garrison">
             <div>
-              <span>城池驻军</span>
+              <span>{t('city.garrison')}</span>
               <strong>
                 {fmt(city.troops)}
-                <small>兵</small>
+                <small>{t('unit.soldier')}</small>
               </strong>
             </div>
             <Users />
           </div>
           <div className="city-stats">
-            <Stat label="士气" value={city.morale} />
-            <Stat label="城防" value={city.wall} />
+            <Stat label={t('stat.morale')} value={city.morale} />
+            <Stat label={t('stat.wall')} value={city.wall} />
             <div className="economy-row">
               <span>
                 <Wheat />
-                农业 <b>Lv.{city.farm}</b>
+                {t('stat.farm')} <b>Lv.{city.farm}</b>
               </span>
               <span>
                 <Coins />
-                商业 <b>Lv.{city.market}</b>
+                {t('stat.market')} <b>Lv.{city.market}</b>
               </span>
             </div>
           </div>
           <div className="command-title">
-            <h3>{mine ? '城池指令' : '城池概况'}</h3>
-            <span>{mine ? '每次消耗 1 政令' : '沿道路进军此城'}</span>
+            <h3>{mine ? t('cmd.title.mine') : t('cmd.title.enemy')}</h3>
+            <span>{mine ? t('cmd.sub.mine') : t('cmd.sub.enemy')}</span>
           </div>
           {mine && (
             <div className="advisor-picker">
-              <label htmlFor="administrator-select">执行武将</label>
+              <label htmlFor="administrator-select">{t('exec.officer')}</label>
               <Select
                 value={administrator}
                 onValueChange={(v) => setAdministrator(v || 'auto')}
@@ -770,16 +812,16 @@ export default function Game() {
                 >
                   <SelectValue>
                     {administrator === 'auto'
-                      ? '自动择优任命'
-                      : E.getOfficer(administrator)?.name || '选择武将'}
+                      ? t('exec.auto')
+                      : E.getOfficer(administrator)?.name || t('exec.choose')}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="auto">自动择优任命</SelectItem>
+                  <SelectItem value="auto">{t('exec.auto')}</SelectItem>
                   {available.map((o) => (
                     <SelectItem key={o.id} value={o.id}>
                       <Portrait officer={o} className="option-avatar" />
-                      {o.name} · 智 {o.int}
+                      {o.name} · {t('stat.int')} {o.int}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -799,6 +841,17 @@ export default function Game() {
                     g.player,
                     administrator,
                   );
+                const actionLabel =
+                  type === 'farm'
+                    ? t('action.farm')
+                    : type === 'market'
+                      ? t('action.market')
+                      : type === 'recruit'
+                        ? t('action.recruit')
+                        : type === 'train'
+                          ? t('action.train')
+                          : t('action.wall');
+                void a;
                 return (
                   <button
                     className="action-button"
@@ -806,13 +859,13 @@ export default function Game() {
                     title={
                       typeof error === 'string'
                         ? error
-                        : `${a.description} · ${quote.officer?.name || '无可用武将'}执行 · 智略减费${quote.discount}%`
+                        : `${actionLabel} · ${quote.officer?.name || t('action.wait')} · ${quote.discount}%`
                     }
                     key={type}
                     onClick={() =>
                       update(
                         (s) => E.act(s, type, selected, administrator),
-                        `${quote.officer?.name}执行：${a.description}，休整至第${g.turn + 2}回合。`,
+                        `${quote.officer?.name}：${actionLabel}。`,
                       )
                     }
                   >
@@ -820,18 +873,18 @@ export default function Game() {
                       <Icon size={18} />
                     </span>
                     <span>
-                      <strong>{a.name}</strong>
+                      <strong>{actionLabel}</strong>
                       <small>
-                        {quote.officer?.name || '等待武将'} ·{' '}
+                        {quote.officer?.name || t('action.wait')} ·{' '}
                         {type === 'farm'
-                          ? '农业 +1'
+                          ? t('action.effect.farm')
                           : type === 'market'
-                            ? '商业 +1'
+                            ? t('action.effect.market')
                             : type === 'recruit'
-                              ? '兵 +2,500'
+                              ? t('action.effect.recruit')
                               : type === 'train'
-                                ? '士气 +12'
-                                : '城防 +12'}
+                                ? t('action.effect.train')
+                                : t('action.effect.wall')}
                       </small>
                     </span>
                     <span className="action-cost">
@@ -852,12 +905,12 @@ export default function Game() {
                 }
                 onClick={() => openMarch()}
               >
-                <Swords size={18} /> 调兵出征 <ArrowRight size={17} />
+                <Swords size={18} /> {t('btn.march')} <ArrowRight size={17} />
               </button>
             </div>
           ) : (
             <div className="enemy-actions">
-              <p>从相邻的己方城池派遣军队，战胜守军即可占领。</p>
+              <p>{t('enemy.hint')}</p>
               {myCities
                 .filter((c) => E.neighbors(c.id).includes(selected))
                 .map((c) => (
@@ -881,27 +934,30 @@ export default function Game() {
                     }}
                   >
                     <Swords size={17} />
-                    <span>从{c.name}出征</span>
+                    <span>
+                      {t('enemy.from')}
+                      {cityName(c.id, c.name, lang)}
+                    </span>
                     <ChevronRight size={16} />
                   </button>
                 ))}
               {!myCities.some((c) => E.neighbors(c.id).includes(selected)) && (
-                <small>尚无相邻的己方城池，需先打通道路。</small>
+                <small>{t('enemy.none')}</small>
               )}
             </div>
           )}
           <div className="domination">
             <div>
-              <span>天下归心</span>
+              <span>{t('domination')}</span>
               <b>
                 {myCities.length}
-                <small> / 15 城</small>
+                <small> / 15 {t('domination.city')}</small>
               </b>
             </div>
             <div className="domination-track">
               <i style={{ width: `${(myCities.length / 15) * 100}%` }} />
             </div>
-            <p>占领全部城池，即可一统天下</p>
+            <p>{t('domination.goal')}</p>
           </div>
         </aside>
       </div>
@@ -911,29 +967,13 @@ export default function Game() {
           <div>
             <strong>{E.dateLabel(g.turn)}</strong>
             <span>
-              第 {g.turn} 回合 ·{' '}
-              {
-                [
-                  '春',
-                  '春',
-                  '春',
-                  '夏',
-                  '夏',
-                  '夏',
-                  '秋',
-                  '秋',
-                  '秋',
-                  '冬',
-                  '冬',
-                  '冬',
-                ][(g.turn - 1) % 12]
-              }
+              {t('turn.round')} {g.turn}
             </span>
           </div>
         </div>
         <div className="latest-report">
           <span>
-            <ScrollText size={14} /> 军 情
+            <ScrollText size={14} /> {t('report')}
           </span>
           <p title={g.logs[0]?.text}>
             {g.logs.find((l) => l.kind === 'war')?.text || g.logs[0]?.text}
@@ -941,7 +981,7 @@ export default function Game() {
         </div>
         <div className="ap-block">
           <span>
-            剩余政令{' '}
+            {t('ap.left')}{' '}
             <b>
               {g.ap}
               <small> / {E.maxAP(g)}</small>
@@ -958,7 +998,7 @@ export default function Game() {
           disabled={busy || setup || g.status !== 'playing'}
           onClick={nextTurn}
         >
-          <span>{busy ? '战局推演中…' : '结束回合'}</span>
+          <span>{busy ? t('btn.busy') : t('btn.end')}</span>
           <ChevronRight size={20} />
         </button>
       </footer>
@@ -975,11 +1015,9 @@ export default function Game() {
           showCloseButton={false}
         >
           <div className="setup-top">
-            <span className="eyebrow">建安十三年 · 英雄集结</span>
-            <DialogTitle>逐鹿天下</DialogTitle>
-            <DialogDescription>
-              山河未定，英雄并起。择一方势力，书写你的三国。
-            </DialogDescription>
+            <span className="eyebrow">{t('setup.eyebrow')}</span>
+            <DialogTitle>{t('setup.title')}</DialogTitle>
+            <DialogDescription>{t('setup.desc')}</DialogDescription>
           </div>
           <div className="faction-options">
             {E.PLAYABLE.map((f) => (
@@ -994,66 +1032,78 @@ export default function Game() {
                   officer={E.FACTIONS[f].officers[0]}
                   className="faction-portrait"
                 />
-                <h3>{E.FACTIONS[f].name}</h3>
+                <h3>
+                  {factionName(f, lang)}
+                  {lang === 'ar' && (
+                    <small style={{ display: 'block', opacity: 0.75 }}>
+                      {E.FACTIONS[f].name}
+                    </small>
+                  )}
+                </h3>
                 <small>{E.FACTIONS[f].title}</small>
                 <p>{E.FACTIONS[f].desc}</p>
                 <span className="faction-choice">
                   {f === faction ? (
                     <>
                       <Check size={14} />
-                      已选择
+                      {t('setup.chosen')}
                     </>
                   ) : (
-                    '选择势力'
+                    t('setup.choose')
                   )}
                 </span>
               </button>
             ))}
           </div>
           <button className="gold-button" onClick={start}>
-            起 兵 出 征 <ArrowRight size={18} />
+            {t('setup.start')} <ArrowRight size={18} />
           </button>
-          <p className="setup-footnote">108 位名将 · 原创头像 · 三方均衡开局</p>
+          <p className="setup-footnote">{t('setup.footnote')}</p>
         </DialogContent>
       </Dialog>
       <Dialog open={attack} onOpenChange={setAttack}>
         <DialogContent className="game-dialog march-dialog">
           <DialogTitle>
-            <Swords size={22} /> 调兵出征
+            <Swords size={22} /> {t('march.title')}
           </DialogTitle>
           <DialogDescription>
-            由{city.name}出发，结束本回合后抵达。出征消耗 1 政令。
+            {t('march.desc.from')}
+            {cityName(city.id, city.name, lang)}
+            {t('march.desc.tail')}
           </DialogDescription>
           <label className="field-label" htmlFor="march-target">
-            目标城池
+            {t('march.target')}
           </label>
           <Select value={target} onValueChange={(v) => setTarget(v || '')}>
             <SelectTrigger id="march-target" className="game-select">
               <SelectValue>
                 {targetCity
-                  ? `${targetCity.name} · ${targetCity.owner === g.player ? '友军增援' : E.FACTIONS[targetCity.owner].name + '势力'} · ${fmt(targetCity.troops)}兵`
-                  : '选择城池'}
+                  ? `${cityName(targetCity.id, targetCity.name, lang)} · ${targetCity.owner === g.player ? t('march.friendly') : factionName(targetCity.owner as 'wei' | 'shu' | 'wu' | 'qun', lang)} · ${fmt(targetCity.troops)}`
+                  : t('march.target.choose')}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {targets.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  {c.name} ·{' '}
-                  {c.owner === g.player ? '友军' : E.FACTIONS[c.owner].name} ·{' '}
-                  {fmt(c.troops)}兵
+                  {cityName(c.id, c.name, lang)} ·{' '}
+                  {c.owner === g.player
+                    ? t('march.friendly')
+                    : factionName(c.owner as 'wei' | 'shu' | 'wu' | 'qun', lang)}{' '}
+                  · {fmt(c.troops)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <label className="field-label" htmlFor="march-officer">
-            领军武将
+            {t('march.officer')}
           </label>
           <Select value={officer} onValueChange={(v) => setOfficer(v || '')}>
             <SelectTrigger id="march-officer" className="game-select">
               <SelectValue>
-                {available.find((o) => o.id === officer)?.name || '无可用武将'}
+                {available.find((o) => o.id === officer)?.name ||
+                  t('march.nofficer')}
                 {available.find((o) => o.id === officer)
-                  ? ` · 统率 ${available.find((o) => o.id === officer)?.command}`
+                  ? ` · ${t('stat.command')} ${available.find((o) => o.id === officer)?.command}`
                   : ''}
               </SelectValue>
             </SelectTrigger>
@@ -1061,7 +1111,10 @@ export default function Game() {
               {available.map((o) => (
                 <SelectItem key={o.id} value={o.id}>
                   <Portrait officer={o} className="option-avatar" />
-                  {o.name} · 统{o.command} 武{o.war} 智{o.int}
+                  {o.name} · {t('stat.command')}
+                  {o.command} {t('stat.war')}
+                  {o.war} {t('stat.int')}
+                  {o.int}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -1072,24 +1125,25 @@ export default function Game() {
               <div>
                 <b>{chosenOfficer.name}</b>
                 <span>
-                  {chosenOfficer.specialty} · {chosenOfficer.role}
+                  {specialtyName(chosenOfficer.specialty, t)} ·{' '}
+                  {chosenOfficer.role}
                 </span>
                 <small>
-                  带兵上限 {fmt(E.leaderCapacity(chosenOfficer))} · 军粮节省{' '}
-                  {Math.round(chosenOfficer.int * 0.2)}%
+                  {t('detail.cap')} {fmt(E.leaderCapacity(chosenOfficer))} ·{' '}
+                  {t('detail.save')} {Math.round(chosenOfficer.int * 0.2)}%
                 </small>
               </div>
             </div>
           )}
           <div className="troop-picker">
-            <span className="troop-label">出征兵力</span>
+            <span className="troop-label">{t('march.troops')}</span>
             <strong>
               {fmt(troops)}
-              <small> 兵</small>
+              <small> {t('unit.soldier')}</small>
             </strong>
           </div>
           <Slider
-            aria-label="出征兵力"
+            aria-label={t('march.troops')}
             value={[troops]}
             onValueChange={(v) => setTroops(Array.isArray(v) ? v[0] : v)}
             min={1000}
@@ -1099,7 +1153,9 @@ export default function Game() {
           />
           <div className="slider-labels">
             <span>1,000</span>
-            <span>留守 {fmt(city.troops - troops)} 兵</span>
+            <span>
+              {t('march.keep')} {fmt(city.troops - troops)}
+            </span>
           </div>
           {targetCity && (
             <div
@@ -1107,24 +1163,24 @@ export default function Game() {
             >
               <span>
                 {targetCity.owner === g.player
-                  ? '友军增援'
+                  ? t('march.friendly')
                   : forecast?.win
-                    ? '预计胜势'
-                    : '预计失利'}
+                    ? t('march.fav')
+                    : t('march.risk')}
               </span>
               <strong>
                 {targetCity.owner === g.player
-                  ? '合兵一处，守望相助'
+                  ? t('march.join')
                   : forecast?.win
-                    ? `预计余部 ${fmt(forecast.survivors)} 兵`
-                    : `预计撤回 ${fmt(forecast?.retreat || 0)} 兵`}
+                    ? `${t('march.survive')} ${fmt(forecast.survivors)}`
+                    : `${t('march.retreat')} ${fmt(forecast?.retreat || 0)}`}
               </strong>
               <small>
-                军粮消耗{' '}
-                {fmt(chosenOfficer ? E.marchFood(troops, chosenOfficer) : 0)} ·
-                政令 1
+                {t('march.food')}{' '}
+                {fmt(chosenOfficer ? E.marchFood(troops, chosenOfficer) : 0)} ·{' '}
+                {t('march.ap')}
               </small>
-              <p>其他部队的抵达可能改变最终战况。</p>
+              <p>{t('march.note')}</p>
             </div>
           )}
           <button
@@ -1135,12 +1191,12 @@ export default function Game() {
             onClick={() => {
               update(
                 (s) => E.march(s, selected, target, troops, officer),
-                '军令已下，部队将在结束回合后抵达。',
+                t('march.confirm'),
               );
               setAttack(false);
             }}
           >
-            确认出征 <Flag size={17} />
+            {t('march.confirm')} <Flag size={17} />
           </button>
           {E.marchError(g, selected, target, troops, officer) && (
             <p className="form-error">
@@ -1151,68 +1207,49 @@ export default function Game() {
       </Dialog>
       <Dialog open={help} onOpenChange={setHelp}>
         <DialogContent className="game-dialog help-dialog">
-          <DialogTitle>军师锦囊</DialogTitle>
-          <DialogDescription>内修政理，外御强敌。</DialogDescription>
+          <DialogTitle>{t('help.title')}</DialogTitle>
+          <DialogDescription>{t('help.desc')}</DialogDescription>
           <Tabs defaultValue="rules">
             <TabsList>
-              <TabsTrigger value="rules">玩法说明</TabsTrigger>
-              <TabsTrigger value="saves">存档管理</TabsTrigger>
+              <TabsTrigger value="rules">{t('help.tab.rules')}</TabsTrigger>
+              <TabsTrigger value="saves">{t('help.tab.saves')}</TabsTrigger>
             </TabsList>
             <TabsContent value="rules">
               <ol className="rules">
                 <li>
-                  <b>经营城池</b>
-                  <p>
-                    金钱与军粮在回合结束时入库。发展商贸增加金钱，开垦农田增加军粮。兵卒每回合消耗军粮。指定谋士办理内政可节省至多20%金钱。新占城池连续两次结算产出减半。
-                  </p>
+                  <b>{t('help.r1.t')}</b>
+                  <p>{t('help.r1.d')}</p>
                 </li>
                 <li>
-                  <b>整军备战</b>
-                  <p>
-                    征兵增加 2,500
-                    兵力，会稀释老兵士气；练兵与修城各提升12点。3道政令在占领8城、13城时分别增加至4道、5道。
-                  </p>
+                  <b>{t('help.r2.t')}</b>
+                  <p>{t('help.r2.d')}</p>
                 </li>
                 <li>
-                  <b>调兵遣将</b>
-                  <p>
-                    点击己方城池，选择「调兵出征」。只能沿道路进军相邻城池，也能向友城增援。至少留守
-                    1,000
-                    兵，每支部队受主将统率限制。武将执行军令后，下回合休整。
-                  </p>
+                  <b>{t('help.r3.t')}</b>
+                  <p>{t('help.r3.d')}</p>
                 </li>
                 <li>
-                  <b>推进战局</b>
-                  <p>
-                    结束回合后电脑势力同时下令，部队依轮换先后次序抵达并结算；对向行军不在途中交战。占领全部
-                    15 城且无敌军在外，即获胜。
-                  </p>
+                  <b>{t('help.r4.t')}</b>
+                  <p>{t('help.r4.d')}</p>
                 </li>
               </ol>
-              <p className="prototype-note">
-                均衡开局：三方各3城、36,000兵、4,200金、18,000粮；行军道路与中立城防守对称，公平争夺荆州。旧存档保留原战局，新数值即时生效。
-                <br />
-                本作是受经典三国策略游戏启发的原创简化原型，采用架空英雄集结剧本；不包含《三国志11》的原版素材与完整系统。
-              </p>
+              <p className="prototype-note">{t('help.proto')}</p>
             </TabsContent>
             <TabsContent value="saves">
               <div className="save-panel">
                 <Save size={30} />
-                <h3>随时收兵，随时再战</h3>
-                <p>
-                  每次行动后自动保存到当前浏览器。可导出 JSON
-                  存档备份，或带到另一台设备继续。导入会替换当前战局。
-                </p>
+                <h3>{t('save.title')}</h3>
+                <p>{t('save.desc')}</p>
                 <button className="gold-button" onClick={exportSave}>
                   <Download size={17} />
-                  导出当前存档
+                  {t('save.export')}
                 </button>
                 <button
                   className="outline-button"
                   onClick={() => imported.current?.click()}
                 >
                   <Upload size={17} />
-                  导入存档
+                  {t('save.import')}
                 </button>
               </div>
             </TabsContent>
@@ -1232,23 +1269,24 @@ export default function Game() {
                 <Portrait officer={detail} />
                 <div>
                   <span className="eyebrow">
-                    {E.FACTIONS[detail.faction].name}势力 · {detail.specialty}
+                    {factionName(detail.faction, lang)} ·{' '}
+                    {specialtyName(detail.specialty, t)}
                   </span>
                   <DialogTitle>{detail.name}</DialogTitle>
                   <DialogDescription>{detail.role}</DialogDescription>
                   <span className="detail-status">
                     {E.officerAvailable(g, detail.id)
-                      ? '本阵待命'
-                      : `休整至第 ${g.officerReadyAt[detail.id] || g.turn + 1} 回合`}
+                      ? t('status.ready')
+                      : `${t('detail.rest.until')} ${g.officerReadyAt[detail.id] || g.turn + 1}`}
                   </span>
                 </div>
               </div>
               <div className="detail-stats">
                 {(
                   [
-                    ['统率', detail.command],
-                    ['武力', detail.war],
-                    ['智略', detail.int],
+                    [t('stat.command'), detail.command],
+                    [t('stat.war'), detail.war],
+                    [t('stat.int'), detail.int],
                   ] as const
                 ).map(([label, value]) => (
                   <div key={label}>
@@ -1262,19 +1300,21 @@ export default function Game() {
               </div>
               <div className="detail-benefits">
                 <p>
-                  <b>统兵上限</b>
-                  <span>{fmt(E.leaderCapacity(detail))} 兵</span>
+                  <b>{t('detail.cap')}</b>
+                  <span>
+                    {fmt(E.leaderCapacity(detail))} {t('unit.soldier')}
+                  </span>
                 </p>
                 <p>
-                  <b>综合统军</b>
+                  <b>{t('detail.skill')}</b>
                   <span>{E.combatSkill(detail).toFixed(1)} / 99</span>
                 </p>
                 <p>
-                  <b>行军节粮</b>
+                  <b>{t('detail.save')}</b>
                   <span>{Math.round(detail.int * 0.2)}%</span>
                 </p>
                 <p>
-                  <b>内政减费</b>
+                  <b>{t('detail.discount')}</b>
                   <span>
                     {Math.round(
                       Math.min(0.2, Math.max(0, detail.int - 50) * 0.004) * 100,
@@ -1283,9 +1323,7 @@ export default function Game() {
                   </span>
                 </p>
               </div>
-              <p className="prototype-note">
-                统率、武力、智略共同决定出征战力。可在城池指令中任命内政武将，或在出征时选为主将。数值为本作原创设定。
-              </p>
+              <p className="prototype-note">{t('detail.note')}</p>
             </>
           )}
         </DialogContent>
@@ -1299,12 +1337,10 @@ export default function Game() {
       />
       <AlertDialog open={restart} onOpenChange={setRestart}>
         <AlertDialogContent className="game-dialog">
-          <AlertDialogTitle>另启新局</AlertDialogTitle>
-          <AlertDialogDescription>
-            当前自动存档将被新战局替换。需要保留时，请先导出存档。
-          </AlertDialogDescription>
+          <AlertDialogTitle>{t('restart.title')}</AlertDialogTitle>
+          <AlertDialogDescription>{t('restart.desc')}</AlertDialogDescription>
           <div className="confirm-buttons">
-            <AlertDialogCancel>继续当前战局</AlertDialogCancel>
+            <AlertDialogCancel>{t('restart.stay')}</AlertDialogCancel>
             <button
               className="gold-button"
               onClick={() => {
@@ -1312,7 +1348,7 @@ export default function Game() {
                 setSetup(true);
               }}
             >
-              选择新势力
+              {t('restart.go')}
             </button>
           </div>
         </AlertDialogContent>
@@ -1324,18 +1360,18 @@ export default function Game() {
         >
           <Flag size={44} />
           <DialogTitle>
-            {g.status === 'won' ? '山河一统' : '卷土重来'}
+            {g.status === 'won' ? t('result.win') : t('result.lose')}
           </DialogTitle>
           <DialogDescription>
             {g.status === 'won'
-              ? `${me.name}历经 ${g.turn - 1} 回合，终使十五城尽归一统。`
-              : '城池已失，壮志未酬。整顿兵马，再争天下。'}
+              ? `${factionName(g.player, lang)} · ${t('turn.round')} ${g.turn - 1}`
+              : t('result.lose')}
           </DialogDescription>
           <button className="gold-button" onClick={() => setSetup(true)}>
-            再启征程 <ArrowRight size={18} />
+            {t('result.again')} <ArrowRight size={18} />
           </button>
           <button className="outline-button" onClick={exportSave}>
-            导出此役存档
+            {t('result.export')}
           </button>
         </DialogContent>
       </Dialog>

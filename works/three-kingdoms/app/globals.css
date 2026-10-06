@@ -2703,3 +2703,56 @@ button {
     height: 73px;
   }
 }
+
+/* ===== i18n: RTL + language switcher (Arabic default) ===== */
+html[dir='rtl'] body {
+  font-family: 'Segoe UI', Tahoma, 'Noto Naskh Arabic', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  letter-spacing: 0 !important;
+}
+html[dir='rtl'] .brand h1,
+html[dir='rtl'] .world-head h2,
+html[dir='rtl'] .city-name-row h2,
+html[dir='rtl'] .officer-card h3 {
+  letter-spacing: 0 !important;
+}
+html[dir='rtl'] .rail-bottom,
+html[dir='rtl'] .map-caption {
+  writing-mode: horizontal-tb;
+}
+html[dir='rtl'] .rail button.active:before {
+  left: auto;
+  right: -10px;
+}
+html[dir='rtl'] .latest-report {
+  border-left: 0;
+  border-right: 1px solid #6a784b44;
+  padding-left: 0;
+  padding-right: 24px;
+}
+html[dir='rtl'] .action-cost,
+html[dir='rtl'] .march-button svg:last-child {
+  margin-left: 0;
+}
+.lang-switch {
+  display: flex;
+  gap: 4px;
+  border: 1px solid #53594470;
+  border-radius: 4px;
+  padding: 3px;
+  background: #101b16;
+  flex-shrink: 0;
+}
+.lang-switch button {
+  border: 0;
+  background: transparent;
+  color: #98a28f;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 3px;
+  min-height: 32px;
+}
+.lang-switch button.active {
+  background: #c7a66d;
+  color: #19211b;
+  font-weight: 700;
+}

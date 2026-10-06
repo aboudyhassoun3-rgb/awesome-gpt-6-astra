@@ -1,4 +1,5 @@
 // A narrow window or touchscreen laptop is not a phone.
+import { t, getLang } from './i18n.js';
 export function isHandheldDevice(nav=globalThis.navigator){
   return !!nav && (nav.userAgentData?.mobile===true || /Android|iPhone|iPad|iPod/i.test(nav.userAgent||'') || (nav.platform==='MacIntel'&&nav.maxTouchPoints>1));
 }
@@ -47,24 +48,24 @@ export function createMobileControls({action,active,pause,handheld=isHandheldDev
   const driftButton=document.querySelector('[data-drive="drift"]');
   const nitroState=document.querySelector('#touchNitroState'),nitroCount=document.querySelector('#touchNitroCount'),driftState=document.querySelector('#touchDriftState'),empState=document.querySelector('#touchEmpState');
   const pips=[...document.querySelectorAll('.nitro-stock i')];
-  const off=message=>{centerButton.hidden=true;enabled=false;request++;toggle.textContent='Enable tilt steering';toggle.setAttribute('aria-pressed','false');status.textContent=message;filtered=0;};
+  const off=message=>{centerButton.hidden=true;enabled=false;request++;toggle.textContent=t('enableTilt');toggle.setAttribute('aria-pressed','false');status.textContent=message;filtered=0;};
   addEventListener('deviceorientation',e=>{
     if(!enabled)return;const v=screenTilt(e.beta,e.gamma,angle());if(v===null)return;
-    reading=v;lastSample=performance.now();if(center===null){center=v;status.textContent='Tilt ready · Hold comfortably, then lean left / right.';}
+    reading=v;lastSample=performance.now();if(center===null){center=v;status.textContent=t('tiltReady');}
   });
   toggle.addEventListener('click',async()=>{
-    if(enabled){off('Touch steering active.');return;}
+    if(enabled){off(t('tiltTouchActive'));return;}
     const id=++request;toggle.disabled=true;
     try{
       if(!window.isSecureContext||!window.DeviceOrientationEvent)throw Error('unavailable');
       if(typeof DeviceOrientationEvent.requestPermission==='function'&&await DeviceOrientationEvent.requestPermission()!=='granted')throw Error('permission');
       if(id!==request)return;
-      enabled=true;centerButton.hidden=false;center=null;reading=null;lastSample=0;toggle.textContent='Disable tilt steering';toggle.setAttribute('aria-pressed','true');status.textContent='Hold the phone comfortably. Waiting for sensor…';
-      setTimeout(()=>{if(enabled&&id===request&&center===null)off('No motion data. Use touch controls or allow Motion & Orientation in browser settings.');},4000);
-    }catch{off('Motion unavailable or permission denied. Touch steering is ready.');}
+      enabled=true;centerButton.hidden=false;center=null;reading=null;lastSample=0;toggle.textContent=t('disableTilt');toggle.setAttribute('aria-pressed','true');status.textContent=t('tiltWaiting');
+      setTimeout(()=>{if(enabled&&id===request&&center===null)off(t('tiltNoData'));},4000);
+    }catch{off(t('tiltDenied'));}
     finally{toggle.disabled=false;}
   });
-  document.querySelector('#tiltCenter').addEventListener('click',()=>{if(enabled){center=null;filtered=0;status.textContent='Hold still to center steering…';}else status.textContent='Enable tilt steering first, or use the arrow buttons.';});
+  document.querySelector('#tiltCenter').addEventListener('click',()=>{if(enabled){center=null;filtered=0;status.textContent=t('tiltHoldStill');}else status.textContent=t('tiltEnableFirst');});
   document.querySelector('#mobileCenter').addEventListener('click',()=>{center=null;filtered=0;});
   const orientationChanged=()=>{clear();center=null;if(active())pause();};
   screen.orientation?.addEventListener('change',orientationChanged);
@@ -72,17 +73,17 @@ export function createMobileControls({action,active,pause,handheld=isHandheldDev
   addEventListener('blur',clear);document.addEventListener('visibilitychange',clear);
   document.querySelector('#landscapeMode').addEventListener('click',async()=>{
     try{await document.documentElement.requestFullscreen?.();await screen.orientation?.lock?.('landscape');}catch{}
-    document.querySelector('#screenHint').textContent='Rotate your phone sideways. If needed, turn off rotation lock.';
+    document.querySelector('#screenHint').textContent=t('screenHintLandscape');
   });
   return {clear,update({boost,nitro,weapon,drift}){
     const count=Math.floor(boost*3+.01),ready=boost>=.333&&nitro<=0;
     nitroButton.classList.toggle('unavailable',!ready&&nitro<=0);nitroButton.classList.toggle('firing',nitro>0);
     nitroButton.setAttribute('aria-disabled',String(!ready));nitroButton.setAttribute('aria-label',`Nitro, ${count} charges${nitro>0?', boosting':''}`);
-    nitroCount.textContent=count;nitroState.textContent=nitro>0?`${nitro.toFixed(1)}s BOOST`:count?'TAP TO BOOST':'DRIFT TO FILL';
+    nitroCount.textContent=count;nitroState.textContent=nitro>0?`${nitro.toFixed(1)}s ${t('hudNitro')}`:count?t('touchTapBoost'):t('touchDriftFill');
     pips.forEach((p,i)=>p.classList.toggle('full',i<count));
     driftButton.style.setProperty('--drift-charge',Math.round(drift.charge*100));
-    driftState.textContent=drift.active?(drift.charge>=.32?'RELEASE TO BOOST':'CHARGING'):'HOLD TO SLIDE';
-    empButton.classList.toggle('unavailable',weapon<=.34);empButton.setAttribute('aria-disabled',String(weapon<=.34));empState.textContent=weapon>.34?'READY':`${Math.ceil((.34-weapon)/.018)}s`;
+    driftState.textContent=drift.active?(drift.charge>=.32?t('touchRelease'):t('touchCharging')):t('holdToSlide');
+    empButton.classList.toggle('unavailable',weapon<=.34);empButton.setAttribute('aria-disabled',String(weapon<=.34));empState.textContent=weapon>.34?t('ready'):t('touchEmpWait').replace('{n}',Math.ceil((.34-weapon)/.018));
   },down:name=>[...held.values()].includes(name),steer(dt){
     const touch=Number(this.down('right'))-Number(this.down('left'));
     if(this.down('right')||this.down('left'))return touch;

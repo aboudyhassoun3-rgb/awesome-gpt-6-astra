@@ -1,4 +1,12 @@
 // Handling values drive both the garage display and the race simulation.
+// Arabic display strings live in i18n.js (KART_AR); English fields stay canonical.
+import { KART_AR } from './i18n.js';
+export function localizedKart(def, lang = 'ar') {
+  if (lang !== 'ar') return def;
+  const ar = KART_AR?.[def.name];
+  if (!ar) return def;
+  return { ...def, ...ar };
+}
 export const craftDefs = [
   {name:'COMET',title:'Lightweight',tag:'Agile handling',description:'Lightweight and responsive. Built for quick direction changes.',style:'sport',scale:[.9,.95,1.04],accel:235,max:525,turn:1.25,drift:1.18,armor:45,mass:.8,color:0x66d9be},
   {name:'APEX',title:'All-rounder',tag:'Well balanced',description:'Balanced speed and handling. A great kart for your first race.',style:'sport',scale:[1,1,1],accel:210,max:560,turn:1,drift:1,armor:72,mass:1,color:0xffb24c},
